@@ -7,6 +7,10 @@ template:
 navbar:
   title: "PlasmoMAPI"
   left:
+    - text: "Vignettes"
+      menu:
+        - text: "Basic tutorial"
+          href: articles/basic_tutorial.html
     - text: "Functions"
       href: reference/index.html
   right:

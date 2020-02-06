@@ -36,11 +36,65 @@ how to ensure your results are statistically valid, see the next vignette.
 PlasmoMAPI works using projects, which are essentially just lists containing all
 data, input and outputs in one place. 
 
+```{r}
+# create new project
+p <- pm_project()
+```
+
 Next we need some data to work with. PlasmoMAPI requires two types of data: i)
 spatial coordinates (longitude and latitude) of sampling locations, ii) pairwise
 statistical values between all sampling locations - most likely estimates of
 genetic relatedness. For this vignette we will use a dataset stored within the
-package. These data were simulated under a simple model of genetics and
-migration, and crucially with a *known barrier* and a *known corridor* of gene
-flow that we will try to identify.
+package, which was simulated under a simple model of genetics and epidemiology.
+Crucially these data were generated with a single *known barrier* and a single
+*known corridor* of gene flow, giving us something to aim for.
 
+```{r}
+# load tutorial data
+tut_data <- pm_file("foo.rds")
+
+# load sampling coordinates into project
+p <- load_coords(p, tut_data$coords$long, tut_data$coords$lat)
+```
+
+TODO
+
+```{r, fig.width = 6, fig.height = 4.5}
+# create and assign map
+p <- create_map(p)
+p <- assign_map(p, pb_markdown = TRUE)
+
+# plot basic hex map
+plot(p)
+```
+
+TODO
+
+```{r, fig.width = 6, fig.height = 4.5}
+# load pairwise genetic distances into project
+p <- load_data(p, tut_data$genetic_distance)
+
+# plot pairwise spatial vs. genetic distances
+plot_dist(p)
+```
+
+TODO
+
+```{r}
+# run analysis
+p <- pm_analysis(p, pb_markdown = TRUE)
+```
+
+TODO
+
+```{r, fig.width = 6, fig.height = 4.5}
+# plot map
+plot_map(p, barrier_list = tut_data$known_barriers)
+```
+
+TODO
+
+```{r, fig.width = 6, fig.height = 4.5}
+# plot interactive map
+plot_leaflet(p)
+```

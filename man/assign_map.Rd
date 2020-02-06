@@ -4,7 +4,12 @@
 \alias{assign_map}
 \title{Assign edges to the hex grid}
 \usage{
-assign_map(proj, eccentricity = 0.9, report_progress = TRUE)
+assign_map(
+  proj,
+  eccentricity = 0.9,
+  report_progress = TRUE,
+  pb_markdown = FALSE
+)
 }
 \arguments{
 \item{proj}{object of class \code{pm_project}.}
@@ -17,6 +22,9 @@ between 0 (perfect circle) and 1 (straight line between foci).}
 
 \item{report_progress}{if \code{TRUE} then a progress bar is printed to the
 console during the permutation testing procedure.}
+
+\item{pb_markdown}{whether to run progress bars in markdown mode, in which
+case they are updated once at the end to avoid large amounts of output.}
 }
 \description{
 Given an PlasmoMAPI project with a hex map already created, determine

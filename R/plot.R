@@ -328,7 +328,7 @@ plot_leaflet <- function(proj, fill_opacity = 0.8, legend_opacity = 1,
   # add legend
   if (add_legend) {
     plot1 <- addLegend(plot1, position = "bottomright", pal = pal, values = ~col,
-                       title = "foo", opacity = legend_opacity)
+                       title = "z-score", opacity = legend_opacity)
   }
   
   # return plot object

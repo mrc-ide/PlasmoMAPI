@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • PlasmoMAPI</title>
+<title>Assign edges to the hex grid — assign_map • PlasmoMAPI</title>
 
 
 <!-- jquery -->
@@ -35,7 +35,11 @@
 
 
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Assign edges to the hex grid — assign_map" />
+<meta property="og:description" content="Given an PlasmoMAPI project with a hex map already created, determine
+  which edges intersect each hex. Assumes an elliptical projection with the
+  start- and end-points of an edge becoming the two foci of an ellipse." />
+<meta name="twitter:card" content="summary" />
 
 
 
@@ -54,7 +58,7 @@
   </head>
 
   <body>
-    <div class="container template-article-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -109,17 +113,59 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+    <h1>Assign edges to the hex grid</h1>
+    
+    <div class="hidden name"><code>assign_map.Rd</code></div>
     </div>
 
-    <div class="section ">
-      <h3>All vignettes</h3>
-      <p class="section-desc"></p>
-
-      <ul>
-        <li><a href="basic_tutorial.html">basic_tutorial</a></li>
-      </ul>
+    <div class="ref-description">
+    <p>Given an PlasmoMAPI project with a hex map already created, determine
+  which edges intersect each hex. Assumes an elliptical projection with the
+  start- and end-points of an edge becoming the two foci of an ellipse.</p>
     </div>
+
+    <pre class="usage"><span class='fu'>assign_map</span>(
+  <span class='no'>proj</span>,
+  <span class='kw'>eccentricity</span> <span class='kw'>=</span> <span class='fl'>0.9</span>,
+  <span class='kw'>report_progress</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>pb_markdown</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>proj</th>
+      <td><p>object of class <code>pm_project</code>.</p></td>
+    </tr>
+    <tr>
+      <th>eccentricity</th>
+      <td><p>eccentricity of ellipses, defined as half the distance
+between foci divided by the semi-major axis. \(e = sqrt{1 - b^2/a^2}\),
+where \(e\) is the eccentricity, \(a\) is the length of the semi-major
+axis, and \(b\) is the length of the semi-minor axis. Eccentricity ranges
+between 0 (perfect circle) and 1 (straight line between foci).</p></td>
+    </tr>
+    <tr>
+      <th>report_progress</th>
+      <td><p>if <code>TRUE</code> then a progress bar is printed to the
+console during the permutation testing procedure.</p></td>
+    </tr>
+    <tr>
+      <th>pb_markdown</th>
+      <td><p>whether to run progress bars in markdown mode, in which
+case they are updated once at the end to avoid large amounts of output.</p></td>
+    </tr>
+    </table>
+
+
+  </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+    <h2>Contents</h2>
+    <ul class="nav nav-pills nav-stacked">
+      <li><a href="#arguments">Arguments</a></li>
+    </ul>
+
   </div>
 </div>
 

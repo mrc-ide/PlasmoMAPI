@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • PlasmoMAPI</title>
+<title>Get distance between points taking into account barriers — get_barrier_intersect • PlasmoMAPI</title>
 
 
 <!-- jquery -->
@@ -35,7 +35,13 @@
 
 
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Get distance between points taking into account barriers — get_barrier_intersect" />
+<meta property="og:description" content="Given a set of lat/lon coordinates and a list of barriers in the
+  form of polygons, returns the &quot;distance&quot; between points where distance is
+  equal to the great-circle distance with a penalty applied if the line
+  intersects a barrier. The exact way in which barriers modify distances can
+  be varied (see barrier_method argument)." />
+<meta name="twitter:card" content="summary" />
 
 
 
@@ -54,7 +60,7 @@
   </head>
 
   <body>
-    <div class="container template-article-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -109,17 +115,88 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+    <h1>Get distance between points taking into account barriers</h1>
+    
+    <div class="hidden name"><code>get_barrier_intersect.Rd</code></div>
     </div>
 
-    <div class="section ">
-      <h3>All vignettes</h3>
-      <p class="section-desc"></p>
-
-      <ul>
-        <li><a href="basic_tutorial.html">basic_tutorial</a></li>
-      </ul>
+    <div class="ref-description">
+    <p>Given a set of lat/lon coordinates and a list of barriers in the
+  form of polygons, returns the "distance" between points where distance is
+  equal to the great-circle distance with a penalty applied if the line
+  intersects a barrier. The exact way in which barriers modify distances can
+  be varied (see <code>barrier_method</code> argument).</p>
     </div>
+
+    <pre class="usage"><span class='fu'>get_barrier_intersect</span>(
+  <span class='no'>node_long</span>,
+  <span class='no'>node_lat</span>,
+  <span class='kw'>barrier_list</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  <span class='kw'>barrier_penalty</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>numeric</a></span>(),
+  <span class='kw'>barrier_method</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>max_barrier_range</span> <span class='kw'>=</span> <span class='fl'>Inf</span>,
+  <span class='kw'>eccentricity</span> <span class='kw'>=</span> <span class='fl'>0.9</span>,
+  <span class='kw'>n_ell</span> <span class='kw'>=</span> <span class='fl'>20</span>
+)</pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>node_long</th>
+      <td><p>longitudes of nodes.</p></td>
+    </tr>
+    <tr>
+      <th>node_lat</th>
+      <td><p>latitudes of nodes.</p></td>
+    </tr>
+    <tr>
+      <th>barrier_list</th>
+      <td><p>list of polygons representing barriers. Each element of
+the list must be a dataframe with columns <code>long</code> and <code>lat</code>
+specifying the coordinates of points that make up the polygon. Polygons
+must be complete rings, meaning the final row of the dataframe must equal
+the first row.</p></td>
+    </tr>
+    <tr>
+      <th>barrier_penalty</th>
+      <td><p>penalty values of each barrier. If a single value is
+provided then this value will be used for all barriers.</p></td>
+    </tr>
+    <tr>
+      <th>barrier_method</th>
+      <td><p>the method by which penalties are applied:</p><ul>
+<li><p>bullet 1 compare line, apply penalty on intersection</p></li>
+<li><p>bullet 2 compare line, apply penalty per unit intersection</p></li>
+<li><p>bullet 3 compare ellipse, apply penalty per unit area intersection</p></li>
+</ul></td>
+    </tr>
+    <tr>
+      <th>max_barrier_range</th>
+      <td><p>edges that are longer than this distance are
+unaffected by any barriers. Makes it possible to model barriers that only
+apply locally.</p></td>
+    </tr>
+    <tr>
+      <th>eccentricity</th>
+      <td><p>eccentricity of ellipses (only used under
+<code>barrier_method = 3</code>).</p></td>
+    </tr>
+    <tr>
+      <th>n_ell</th>
+      <td><p>number of points that make up an ellipse (only used under
+<code>barrier_method = 3</code>).</p></td>
+    </tr>
+    </table>
+
+
+  </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+    <h2>Contents</h2>
+    <ul class="nav nav-pills nav-stacked">
+      <li><a href="#arguments">Arguments</a></li>
+    </ul>
+
   </div>
 </div>
 

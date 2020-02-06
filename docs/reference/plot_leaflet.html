@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • PlasmoMAPI</title>
+<title>Interactive hex map of PlasmoMAPI output — plot_leaflet • PlasmoMAPI</title>
 
 
 <!-- jquery -->
@@ -35,7 +35,9 @@
 
 
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Interactive hex map of PlasmoMAPI output — plot_leaflet" />
+<meta property="og:description" content="Interactive hex map of PlasmoMAPI output." />
+<meta name="twitter:card" content="summary" />
 
 
 
@@ -54,7 +56,7 @@
   </head>
 
   <body>
-    <div class="container template-article-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -109,17 +111,60 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+    <h1>Interactive hex map of PlasmoMAPI output</h1>
+    
+    <div class="hidden name"><code>plot_leaflet.Rd</code></div>
     </div>
 
-    <div class="section ">
-      <h3>All vignettes</h3>
-      <p class="section-desc"></p>
-
-      <ul>
-        <li><a href="basic_tutorial.html">basic_tutorial</a></li>
-      </ul>
+    <div class="ref-description">
+    <p>Interactive hex map of PlasmoMAPI output.</p>
     </div>
+
+    <pre class="usage"><span class='fu'>plot_leaflet</span>(
+  <span class='no'>proj</span>,
+  <span class='kw'>fill_opacity</span> <span class='kw'>=</span> <span class='fl'>0.8</span>,
+  <span class='kw'>legend_opacity</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>map_type</span> <span class='kw'>=</span> <span class='fl'>110</span>,
+  <span class='kw'>col_scale</span> <span class='kw'>=</span> <span class='kw pkg'>viridisLite</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/viridisLite/man/viridis.html'>magma</a></span>(<span class='fl'>100</span>)
+)</pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>proj</th>
+      <td><p>object of class <code>pm_project</code>.</p></td>
+    </tr>
+    <tr>
+      <th>fill_opacity</th>
+      <td><p>opacity of fill; 0 = fully transparent, 1 = fully opaque.</p></td>
+    </tr>
+    <tr>
+      <th>legend_opacity</th>
+      <td><p>opacity of legend; 0 = fully transparent, 1 = fully
+opaque.</p></td>
+    </tr>
+    <tr>
+      <th>map_type</th>
+      <td><p>an index from 1 to 137 indicating the type of base map. The
+map types are taken from <code><a href='https://rdrr.io/pkg/leaflet/man/providers.html'>leaflet::providers</a></code>, see
+<a href='http://leaflet-extras.github.io/leaflet-providers/preview/index.html'>here</a>
+for an interactive gallary.</p></td>
+    </tr>
+    <tr>
+      <th>col_scale</th>
+      <td><p>the colour scale to use.</p></td>
+    </tr>
+    </table>
+
+
+  </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+    <h2>Contents</h2>
+    <ul class="nav nav-pills nav-stacked">
+      <li><a href="#arguments">Arguments</a></li>
+    </ul>
+
   </div>
 </div>
 

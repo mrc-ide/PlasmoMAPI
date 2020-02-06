@@ -18,14 +18,15 @@ Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List
   print("Assigning edges to hexes");
   
   // load data and parameters
-  vector<double> node_long = rcpp_to_vector_double(args["node_long"]);                  //Longitude of data nodes
-  vector<double> node_lat = rcpp_to_vector_double(args["node_lat"]);                    //Latitude of data nodes
-  vector<double> hex_long = rcpp_to_vector_double(args["hex_long"]);                    //Longitude of hexes
-  vector<double> hex_lat = rcpp_to_vector_double(args["hex_lat"]);                      //Latitude of hexes
-  double hex_size = rcpp_to_double(args["hex_size"]);                                   //Size (width) of hexes
-  double eccentricity = rcpp_to_double(args["eccentricity"]);                           //Eccentricity of ellipses (see help for details)
-  bool report_progress = rcpp_to_bool(args["report_progress"]);                         //Whether to update progress bar
-  Rcpp::Function update_progress = args_functions["update_progress"];                   //R function for updating progress bar
+  vector<double> node_long = rcpp_to_vector_double(args["node_long"]);    //Longitude of data nodes
+  vector<double> node_lat = rcpp_to_vector_double(args["node_lat"]);      //Latitude of data nodes
+  vector<double> hex_long = rcpp_to_vector_double(args["hex_long"]);      //Longitude of hexes
+  vector<double> hex_lat = rcpp_to_vector_double(args["hex_lat"]);        //Latitude of hexes
+  double hex_size = rcpp_to_double(args["hex_size"]);                     //Size (width) of hexes
+  double eccentricity = rcpp_to_double(args["eccentricity"]);             //Eccentricity of ellipses (see help for details)
+  bool report_progress = rcpp_to_bool(args["report_progress"]);           //Whether to update progress bar
+  bool pb_markdown = rcpp_to_bool(args["pb_markdown"]);                   //Whether to run in markdown-safe mode
+  Rcpp::Function update_progress = args_functions["update_progress"];     //R function for updating progress bar
   
   // get basic properties
   int n_node = node_long.size();
@@ -39,8 +40,19 @@ Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List
     
     // report progress
     if (report_progress) {
-      update_progress(args_progress, "pb", hex+1, n_hex);
+      if ((hex+1) == n_hex) {
+        update_progress(args_progress, "pb", hex+1, n_hex);
+      } else {
+        int remainder = hex % int(ceil(double(n_hex)/100));
+        if (remainder == 0 && !pb_markdown) {
+          update_progress(args_progress, "pb", hex+1, n_hex);
+        }
+      }
     }
+    
+    //if (report_progress) {
+    //  update_progress(args_progress, "pb", hex+1, n_hex);
+    //}
     
     // loop through pairwise nodes
     int i = 0;
@@ -81,6 +93,7 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
 	vector<vector<int>> hex_edges = rcpp_to_matrix_int(args["hex_edges"]);        // The edges that intersect each hex
 	int n_perms = rcpp_to_int(args["n_perms"]);                                   // Number of permutations to run
 	bool report_progress = rcpp_to_bool(args["report_progress"]);                 // Whether to update progress bar
+	bool pb_markdown = rcpp_to_bool(args["pb_markdown"]);                         //Whether to run in markdown-safe mode
 	Rcpp::Function update_progress = args_functions["update_progress"];           // R function for updating progress bar
   
   
@@ -119,8 +132,20 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
     
     // report progress
     if (report_progress) {
-      update_progress(args_progress, "pb", perm+1, n_perms);
+      if ((perm+1) == n_perms) {
+        update_progress(args_progress, "pb", perm+1, n_perms);
+      } else {
+        int remainder = perm % int(ceil(double(n_perms)/100));
+        if (remainder == 0 && !pb_markdown) {
+          update_progress(args_progress, "pb", perm+1, n_perms);
+        }
+      }
     }
+    
+    // report progress
+    // if (report_progress) {
+    //  update_progress(args_progress, "pb", perm+1, n_perms);
+    //}
     
     // resample edge values
     for (unsigned int i = 0; i < n_edge; ++i) {

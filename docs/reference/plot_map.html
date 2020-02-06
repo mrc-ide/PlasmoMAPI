@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Articles • PlasmoMAPI</title>
+<title>Plot hex map of PlasmoMAPI output — plot_map • PlasmoMAPI</title>
 
 
 <!-- jquery -->
@@ -35,7 +35,9 @@
 
 
 
-<meta property="og:title" content="Articles" />
+<meta property="og:title" content="Plot hex map of PlasmoMAPI output — plot_map" />
+<meta property="og:description" content="Plot hex map of PlasmoMAPI output." />
+<meta name="twitter:card" content="summary" />
 
 
 
@@ -54,7 +56,7 @@
   </head>
 
   <body>
-    <div class="container template-article-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -109,17 +111,88 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Articles</h1>
+    <h1>Plot hex map of PlasmoMAPI output</h1>
+    
+    <div class="hidden name"><code>plot_map.Rd</code></div>
     </div>
 
-    <div class="section ">
-      <h3>All vignettes</h3>
-      <p class="section-desc"></p>
-
-      <ul>
-        <li><a href="basic_tutorial.html">basic_tutorial</a></li>
-      </ul>
+    <div class="ref-description">
+    <p>Plot hex map of PlasmoMAPI output.</p>
     </div>
+
+    <pre class="usage"><span class='fu'>plot_map</span>(
+  <span class='no'>proj</span>,
+  <span class='kw'>col_scale</span> <span class='kw'>=</span> <span class='kw pkg'>viridisLite</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/viridisLite/man/viridis.html'>magma</a></span>(<span class='fl'>100</span>),
+  <span class='kw'>plot_sampling_points</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>plot_hex_grid</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>min_hex_coverage</span> <span class='kw'>=</span> <span class='fl'>10</span>,
+  <span class='kw'>plot_significance</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>empirical_tail</span> <span class='kw'>=</span> <span class='st'>"both"</span>,
+  <span class='kw'>alpha_raw</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
+  <span class='kw'>barrier_list</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>()
+)</pre>
+
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>proj</th>
+      <td><p>object of class <code>pm_project</code>.</p></td>
+    </tr>
+    <tr>
+      <th>col_scale</th>
+      <td><p>the colour scale to use.</p></td>
+    </tr>
+    <tr>
+      <th>plot_sampling_points</th>
+      <td><p>whether to overlay sampling locations.</p></td>
+    </tr>
+    <tr>
+      <th>plot_hex_grid</th>
+      <td><p>whether to plot the hex map. If the project contains
+output then hexes will be coloured based on z-scores, otherwise a flat
+colour scheme will be used.</p></td>
+    </tr>
+    <tr>
+      <th>min_hex_coverage</th>
+      <td><p>minimum coverage (number of edges assigned to a hex)
+for it to be included in the final result, otherwise these hexes are given
+the value <code>NA</code>.</p></td>
+    </tr>
+    <tr>
+      <th>plot_significance</th>
+      <td><p>whether to outline areas that were identified as
+significant outliers.</p></td>
+    </tr>
+    <tr>
+      <th>empirical_tail</th>
+      <td><p>if plotting significance, whether to calculate
+empirical p-values using a one-sided test (<code>empirical_tail = "left"</code>
+or <code>empirical_tail = "right"</code>) or a two-sided test
+(<code>empirical_tail = "both"</code>).</p></td>
+    </tr>
+    <tr>
+      <th>alpha_raw</th>
+      <td><p>the significance threshold used to determine significantly
+high/low values. This raw value is Bonferroni corrected based on the
+effective number of independent samples, and hence applies to the whole map
+and not just a single hex.</p></td>
+    </tr>
+    <tr>
+      <th>barrier_list</th>
+      <td><p>optional list of polygon coordinates that are added to
+plot.</p></td>
+    </tr>
+    </table>
+
+
+  </div>
+  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+    <h2>Contents</h2>
+    <ul class="nav nav-pills nav-stacked">
+      <li><a href="#arguments">Arguments</a></li>
+    </ul>
+
   </div>
 </div>
 

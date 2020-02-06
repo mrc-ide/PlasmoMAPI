@@ -11,7 +11,8 @@ pm_analysis(
   min_dist = 0,
   max_dist = Inf,
   min_group_size = 5,
-  report_progress = TRUE
+  report_progress = TRUE,
+  pb_markdown = FALSE
 )
 }
 \arguments{
@@ -34,6 +35,9 @@ group, otherwise edges within this group are replaced with \code{NA}.}
 
 \item{report_progress}{if \code{TRUE} then a progress bar is printed to the
 console during the permutation testing procedure.}
+
+\item{pb_markdown}{whether to run progress bars in markdown mode, in which
+case they are updated once at the end to avoid large amounts of output.}
 }
 \description{
 TODO.
