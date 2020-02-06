@@ -21,9 +21,17 @@ RoxygenNote: 7.0.2
 LinkingTo: 
     Rcpp
 Imports: 
-    Rcpp
+    Rcpp,
+    rARPACK,
+    sf,
+    ggplot2,
+    leaflet,
+    methods,
+    tidyr,
+    viridisLite
 SystemRequirements: C++11
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 VignetteBuilder: knitr
