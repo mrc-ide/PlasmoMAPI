@@ -87,14 +87,14 @@ p <- pm_analysis(p, pb_markdown = TRUE)
 
 TODO
 
-```{r, fig.width = 8, fig.height = 6}
+```{r, fig.width = 6, fig.height = 4.5}
 # plot map
 plot_map(p, barrier_list = tut_data$known_barriers)
 ```
 
 TODO
 
-```{r}
+```{r, fig.width = 6, fig.height = 4.5}
 # plot interactive map
 plot_leaflet(p)
 ```
