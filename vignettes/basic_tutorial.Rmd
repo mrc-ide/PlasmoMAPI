@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 
 ```{r, echo=FALSE}
 set.seed(1)
-library(RMAPI)
+library(PlasmoMAPI)
 ```
 
 The purpose of PlasmoMAPI is to use pairwise data on spatial and genetic

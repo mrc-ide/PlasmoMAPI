@@ -13,7 +13,8 @@ Description: Genetic data from Plasmodium parasites can tell us something about 
     and to identify barriers and corridors of migration. PlasmoMAPI does this in a statistically
     robust way, accounting for the natural fall-off of relatedness with distance to identify
     significant discontinuities in the overall spatial pattern.
-License: GPL-3
+BugReports: https://github.com/username/mrc-ide/PlasmoMAPI/issues
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.2
