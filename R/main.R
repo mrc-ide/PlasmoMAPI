@@ -189,12 +189,17 @@ pm_proj.check_map_loaded <- function(proj) {
 #'   between 0 (perfect circle) and 1 (straight line between foci).
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console during the permutation testing procedure.
+#' @param pb_markdown whether to run progress bars in markdown mode, in which
+#'   case they are updated once at the end to avoid large amounts of output.
 #'
 #' @importFrom stats as.dist
 #' @importFrom utils txtProgressBar
 #' @export
 
-assign_map <- function(proj, eccentricity = 0.9, report_progress = TRUE) {
+assign_map <- function(proj,
+                       eccentricity = 0.9,
+                       report_progress = TRUE,
+                       pb_markdown = FALSE) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
@@ -202,6 +207,7 @@ assign_map <- function(proj, eccentricity = 0.9, report_progress = TRUE) {
   pm_proj.check_map_loaded(proj)
   assert_single_bounded(eccentricity, inclusive_left = FALSE, inclusive_right = FALSE)
   assert_single_logical(report_progress)
+  assert_single_logical(pb_markdown)
   
   
   # ---------------------------------------------
@@ -224,7 +230,8 @@ assign_map <- function(proj, eccentricity = 0.9, report_progress = TRUE) {
                hex_lat = proj$map$hex_centroid$lat,
                hex_size = proj$map$hex_size,
                eccentricity = eccentricity,
-               report_progress = report_progress)
+               report_progress = report_progress,
+               pb_markdown = pb_markdown)
   
   
   # ---------------------------------------------
@@ -325,6 +332,8 @@ pm_proj.check_data_loaded <- function(proj) {
 #'   group, otherwise edges within this group are replaced with \code{NA}.
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console during the permutation testing procedure.
+#' @param pb_markdown whether to run progress bars in markdown mode, in which
+#'   case they are updated once at the end to avoid large amounts of output.
 #'
 #' @importFrom rARPACK eigs
 #' @importFrom stats sd
@@ -334,7 +343,8 @@ pm_analysis <- function(proj,
                         n_perms = 1e3,
                         n_breaks = 50, min_dist = 0, max_dist = Inf,
                         min_group_size = 5,
-                        report_progress = TRUE) {
+                        report_progress = TRUE,
+                        pb_markdown = FALSE) {
   
   # check project
   assert_custom_class(proj, "pm_project")
@@ -352,6 +362,7 @@ pm_analysis <- function(proj,
   assert_single_pos_int(min_group_size)
   assert_greq(min_group_size, 2)
   assert_single_logical(report_progress)
+  assert_single_logical(pb_markdown)
   
   
   # ---------------------------------------------
@@ -442,7 +453,9 @@ pm_analysis <- function(proj,
                perm_list = y_perm_norm,
                hex_edges = hex_edges,
                n_perms = n_perms,
-               report_progress = report_progress)
+               report_progress = report_progress,
+               pb_markdown = pb_markdown)
+  
   
   # ---------------------------------------------
   # Carry out simulations in C++ to generate map data
