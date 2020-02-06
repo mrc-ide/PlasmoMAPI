@@ -1,0 +1,14 @@
+destination: docs
+title: PlasmoMAPI
+template:
+  params:
+    bootswatch: flatly
+
+navbar:
+  title: "PlasmoMAPI"
+  left:
+    - text: "Functions"
+      href: reference/index.html
+  right:
+   - icon: fa-github
+     href: https://github.com/mrc-ode/PlasmoMAPI
