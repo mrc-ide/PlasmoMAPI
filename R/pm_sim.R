@@ -29,7 +29,7 @@ summary.pm_sim <- function(object, ...) {
 
 #------------------------------------------------
 # Overload plot()
-#' @method plot rmapi_project
+#' @method plot pm_project
 #' @export
 plot.pm_sim <- function(x, y, ...) {
   plot_daily_states(x)

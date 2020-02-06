@@ -90,7 +90,7 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
   pm_proj.check_coords_loaded(proj)
   pm_proj.check_map_assigned(proj)
   pm_proj.check_output_exists(proj)
-  assert_vector_pos_int(breaks)
+  assert_vector_pos(breaks)
   assert_increasing(breaks)
   assert_greq(length(breaks), 2)
   
@@ -112,7 +112,9 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
   plot1 <- plot1 + geom_point(aes_(x = ~long, y = ~lat), data = coords, size = 0.5)
   
   # titles and legends
-  plot1 <- plot1 + scale_fill_manual(values = col_hotcold(length(breaks)-1), name = "hex coverage")
+  plot1 <- plot1 + scale_fill_manual(values = col_hotcold(length(breaks)-1),
+                                     limits = levels(intersect_bin),
+                                     name = "hex coverage")
   plot1 <- plot1 + xlab("longitude") + ylab("latitude")
   plot1 <- plot1 + guides(fill = guide_legend(reverse = TRUE))
   
