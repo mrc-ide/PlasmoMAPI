@@ -6,3 +6,9 @@ cache: packages
 os:
   - linux
   - osx
+
+addons:
+  apt:
+    packages:
+      - libudunits2-dev
+      - libgdal-dev

@@ -501,7 +501,7 @@ pm_proj.check_output_exists <- function(proj) {
 #'   calculation.
 #'
 #' @param proj object of class \code{pm_project}.
-#' @param empirical_tail whether to do calculate empirical p-values using a
+#' @param empirical_tail whether to calculate empirical p-values using a
 #'   one-sided test (\code{empirical_tail = "left"} or \code{empirical_tail =
 #'   "right"}) or a two-sided test (\code{empirical_tail = "both"}).
 #' @param alpha_raw the significance threshold used to determine significantly

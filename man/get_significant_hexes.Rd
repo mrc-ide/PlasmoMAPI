@@ -14,7 +14,7 @@ get_significant_hexes(
 \arguments{
 \item{proj}{object of class \code{pm_project}.}
 
-\item{empirical_tail}{whether to do calculate empirical p-values using a
+\item{empirical_tail}{whether to calculate empirical p-values using a
 one-sided test (\code{empirical_tail = "left"} or \code{empirical_tail =
 "right"}) or a two-sided test (\code{empirical_tail = "both"}).}
 

@@ -23,7 +23,12 @@ LinkingTo:
 Imports: 
     Rcpp,
     rARPACK,
-    sf
+    sf,
+    ggplot2,
+    leaflet,
+    methods,
+    tidyr,
+    viridisLite
 SystemRequirements: C++11
 Suggests: 
     knitr,
