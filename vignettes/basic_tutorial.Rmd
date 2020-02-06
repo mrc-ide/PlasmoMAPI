@@ -1,0 +1,46 @@
+---
+title: "basic_tutorial"
+author: "Bob Verity and Keith Fraser"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{basic_tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r, echo=FALSE}
+set.seed(1)
+library(RMAPI)
+```
+
+The purpose of PlasmoMAPI is to use pairwise data on spatial and genetic
+distances between populations to identify areas that are likely barriers or
+corridors of gene flow. It does this by comparing the observed distribution of
+relatedness to what we would expect under the null hypothesis of no systematic
+spatial pattern in the data.
+
+This vignette is designed to give a flavour of how PlasmoMAPI works and what
+outputs it can produce. For a more detailed tutorial, including suggestions on
+how to ensure your results are statistically valid, see the next vignette.
+
+## Creating a project and loading data
+
+PlasmoMAPI works using projects, which are essentially just lists containing all
+data, input and outputs in one place. 
+
+Next we need some data to work with. PlasmoMAPI requires two types of data: i)
+spatial coordinates (longitude and latitude) of sampling locations, ii) pairwise
+statistical values between all sampling locations - most likely estimates of
+genetic relatedness. For this vignette we will use a dataset stored within the
+package. These data were simulated under a simple model of genetics and
+migration, and crucially with a *known barrier* and a *known corridor* of gene
+flow that we will try to identify.
+
