@@ -1,3 +1,17 @@
+
+#------------------------------------------------
+#' Pipe operator
+#'
+#' See \code{magrittr::\link[magrittr]{\%>\%}} for details.
+#'
+#' @name %>%
+#' @rdname pipe
+#' @keywords internal
+#' @export
+#' @importFrom magrittr %>%
+#' @usage lhs \%>\% rhs
+NULL
+
 #------------------------------------------------
 #' @title Print unclassed object
 #'
@@ -209,16 +223,27 @@ get_barrier_intersect <- function(node_long,
       # get boolean intersection matrix
       intersect_mat <- as.matrix(sf::st_intersects(line_sfc, poly_sfc))
       
-      # mask out edges that are beyond limit distance
-      intersect_mat <- sweep(intersect_mat, 1, distance_mask, "*")
-      
       # convert to length of intersection if using method 2
       if (barrier_method == 2) {
         intersect_mat[intersect_mat == TRUE] <- mapply(function(x) {
           sf::st_length(x)
         }, sf::st_intersection(line_sfc, poly_sfc))
+        #print("foo")
+        #return(list(line_sfc = line_sfc,
+        #            poly_sfc = poly_sfc))
+        #print(length(line_sfc))
+        #print(length(intersect_lengths))
+        #intersect_mat[intersect_mat == TRUE] <- intersect_lengths[intersect_mat == TRUE]
       }
     }
+    
+    # mask out edges that are beyond limit distance
+    intersect_mat <- sweep(intersect_mat, 1, distance_mask, "*")
+    #print(length(distance_mask))
+    #print(dim(intersect_mat))
+    #print(sum(intersect_mat))
+    
+    #print(intersect_mat[45,53])
     
     # if comparing ellipse
     if (barrier_method == 3) {
@@ -246,9 +271,11 @@ get_barrier_intersect <- function(node_long,
       intersect_mat <- sweep(intersect_mat, 1, distance_mask, "*")
       
       # convert to area of intersection
-      intersect_mat[intersect_mat == TRUE] <- mapply(function(x) {
+      intersect_areas <- mapply(function(x) {
         sf::st_area(x)
       }, sf::st_intersection(ell_sfc, poly_sfc))
+      intersect_mat[intersect_mat == TRUE] <- intersect_areas[intersect_mat == TRUE]
+      
       
     }
     

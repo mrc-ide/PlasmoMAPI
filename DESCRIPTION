@@ -28,7 +28,8 @@ Imports:
     leaflet,
     methods,
     tidyr,
-    viridisLite
+    viridisLite,
+    magrittr
 SystemRequirements: C++11
 Suggests: 
     knitr,

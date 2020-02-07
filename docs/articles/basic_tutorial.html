@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>basic_tutorial • PlasmoMAPI</title>
+<title>Basic tutorial • PlasmoMAPI</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/flatly/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="basic_tutorial">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Basic tutorial">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -76,10 +76,10 @@
 <script src="basic_tutorial_files/leaflet-binding-2.0.3/leaflet.js"></script><script src="basic_tutorial_files/leaflet-providers-1.9.0/leaflet-providers_1.9.0.js"></script><script src="basic_tutorial_files/leaflet-providers-plugin-2.0.3/leaflet-providers-plugin.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>basic_tutorial</h1>
+      <h1>Basic tutorial</h1>
                         <h4 class="author">Bob Verity and Keith Fraser</h4>
             
-            <h4 class="date">2020-02-06</h4>
+            <h4 class="date">2020-02-07</h4>
       
       
       <div class="hidden name"><code>basic_tutorial.Rmd</code></div>
@@ -88,21 +88,21 @@
 
     
     
-<p>The purpose of PlasmoMAPI is to use pairwise data on spatial and genetic distances between populations to identify areas that are likely barriers or corridors of gene flow. It does this by comparing the observed distribution of relatedness to what we would expect under the null hypothesis of no systematic spatial pattern in the data.</p>
-<p>This vignette is designed to give a flavour of how PlasmoMAPI works and what outputs it can produce. For a more detailed tutorial, including suggestions on how to ensure your results are statistically valid, see the next vignette.</p>
+<p><em>PlasmoMAPI</em> uses pairwise data on spatial and genetic distances to identify areas that are likely barriers or corridors of gene flow. It does this by comparing the observed distribution of genetic distances to what we would expect under the null hypothesis of no systematic spatial pattern in the data.</p>
+<p>This vignette is intended to give a flavour for how <em>PlasmoMAPI</em> works and what outputs it can produce, without going into much detail. For a more in-depth tutorial, including suggestions on how to ensure your results are statistically valid, have a look at the next vignette.</p>
 <div id="creating-a-project-and-loading-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#creating-a-project-and-loading-data" class="anchor"></a>Creating a project and loading data</h2>
-<p>PlasmoMAPI works using projects, which are essentially just lists containing all data, input and outputs in one place.</p>
+<p><em>PlasmoMAPI</em> works using projects, which are essentially just lists containing all data, input and outputs in one place. We start by creating a new project:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># create new project</span>
 p &lt;-<span class="st"> </span><span class="kw"><a href="../reference/pm_project.html">pm_project</a></span>()</code></pre></div>
-<p>Next we need some data to work with. PlasmoMAPI requires two types of data: i) spatial coordinates (longitude and latitude) of sampling locations, ii) pairwise statistical values between all sampling locations - most likely estimates of genetic relatedness. For this vignette we will use a dataset stored within the package, which was simulated under a simple model of genetics and epidemiology. Crucially these data were generated with a single <em>known barrier</em> and a single <em>known corridor</em> of gene flow, giving us something to aim for.</p>
+<p>Now we need some data to work with. <em>PlasmoMAPI</em> requires two types of data: i) spatial coordinates (longitude and latitude) of sampling locations, ii) pairwise statistical values between all sampling locations. For this vignette we will use a dataset stored within the package, which was simulated under a simple model of <em>P. falciparum</em> genetics and epidemiology. Crucially this dataset was generated with a <strong>single known barrier</strong> and a <strong>single known corridor</strong> of gene flow, giving us something to aim for.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># load tutorial data</span>
 tut_data &lt;-<span class="st"> </span><span class="kw"><a href="../reference/pm_file.html">pm_file</a></span>(<span class="st">"foo.rds"</span>)
 
 <span class="co"># load sampling coordinates into project</span>
 p &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_coords.html">load_coords</a></span>(p, tut_data<span class="op">$</span>coords<span class="op">$</span>long, tut_data<span class="op">$</span>coords<span class="op">$</span>lat)</code></pre></div>
-<p>TODO</p>
+<p>Use the sampling coordinates to define a hex map. We then “assign” the map, meaning we work out which pairwise values map to each hex, based on an eccentricity value.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># create and assign map</span>
 p &lt;-<span class="st"> </span><span class="kw"><a href="../reference/create_map.html">create_map</a></span>(p)
 <span class="co">#&gt; Creating hex map</span>
@@ -117,14 +117,14 @@ p &lt;-<span class="st"> </span><span class="kw"><a href="../reference/assign_ma
 <span class="co"># plot basic hex map</span>
 <span class="kw"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(p)</code></pre></div>
 <p><img src="basic_tutorial_files/figure-html/unnamed-chunk-5-1.png" width="576"></p>
-<p>TODO</p>
+<p>Load pairwise data, and produce a simple plot of spatial vs. statistical distance. It is very hard to see any subtle trends from this plot, as everything just looks like a cloud of data.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># load pairwise genetic distances into project</span>
 p &lt;-<span class="st"> </span><span class="kw"><a href="../reference/load_data.html">load_data</a></span>(p, tut_data<span class="op">$</span>genetic_distance)
 
 <span class="co"># plot pairwise spatial vs. genetic distances</span>
 <span class="kw"><a href="../reference/plot_dist.html">plot_dist</a></span>(p)</code></pre></div>
 <p><img src="basic_tutorial_files/figure-html/unnamed-chunk-6-1.png" width="576"></p>
-<p>TODO</p>
+<p>Run the main <em>PlasmoMAPI</em> analysis.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># run analysis</span>
 p &lt;-<span class="st"> </span><span class="kw"><a href="../reference/pm_analysis.html">pm_analysis</a></span>(p, <span class="dt">pb_markdown =</span> <span class="ot">TRUE</span>)
 <span class="co">#&gt; Pre-processing</span>
@@ -132,11 +132,11 @@ p &lt;-<span class="st"> </span><span class="kw"><a href="../reference/pm_analys
 <span class="co">#&gt; </span>
   <span class="op">|</span><span class="st">                                                                            </span>
 <span class="st">  </span><span class="er">|======================================================================|</span><span class="st"> </span><span class="dv">100</span>%</code></pre></div>
-<p>TODO</p>
+<p>Now produce the main output of the program - a map showing the z-score of every hex compared to the null distribution. Areas that have significantly high/low z-scores are outlined in black/white, and any known features are also overlaid as dashed polygons. Note that the significance threshold takes into account multiple testing, meaning under the null model we expect to see <strong>no significant hexes</strong> 95% of the time. Hence, in this data there is actually a very strong signal of a barrier to gene flow at the bottom, and a corridor of gene flow on the right, which we know to be correct.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot map</span>
 <span class="kw"><a href="../reference/plot_map.html">plot_map</a></span>(p, <span class="dt">barrier_list =</span> tut_data<span class="op">$</span>known_barriers)</code></pre></div>
 <p><img src="basic_tutorial_files/figure-html/unnamed-chunk-8-1.png" width="576"></p>
-<p>TODO</p>
+<p>We can also produce an interactive version of the same map:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot interactive map</span>
 <span class="kw"><a href="../reference/plot_leaflet.html">plot_leaflet</a></span>(p)</code></pre></div>
 <div id="htmlwidget-4621367353774536eafb" style="width:576px;height:432px;" class="leaflet html-widget"></div>
