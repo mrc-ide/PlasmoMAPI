@@ -11,8 +11,10 @@ navbar:
       menu:
         - text: "Basic tutorial"
           href: articles/basic_tutorial.html
+        - text: "Range-limited analysis"
+          href: articles/range_limited_analysis.html
     - text: "Functions"
       href: reference/index.html
   right:
    - icon: fa-github
-     href: https://github.com/mrc-ode/PlasmoMAPI
+     href: https://github.com/mrc-ide/PlasmoMAPI
