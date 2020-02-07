@@ -1,5 +1,5 @@
 ---
-title: "basic_tutorial"
+title: "Basic tutorial"
 author: "Bob Verity and Keith Fraser"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -16,38 +16,38 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r, echo=FALSE}
+```{r, echo = FALSE}
 set.seed(1)
 library(PlasmoMAPI)
 ```
 
-The purpose of PlasmoMAPI is to use pairwise data on spatial and genetic
-distances between populations to identify areas that are likely barriers or
-corridors of gene flow. It does this by comparing the observed distribution of
-relatedness to what we would expect under the null hypothesis of no systematic
-spatial pattern in the data.
+*PlasmoMAPI* uses pairwise data on spatial and genetic distances to identify
+areas that are likely barriers or corridors of gene flow. It does this by
+comparing the observed distribution of genetic distances to what we would expect
+under the null hypothesis of no systematic spatial pattern in the data.
 
-This vignette is designed to give a flavour of how PlasmoMAPI works and what
-outputs it can produce. For a more detailed tutorial, including suggestions on
-how to ensure your results are statistically valid, see the next vignette.
+This vignette is intended to give a flavour for how *PlasmoMAPI* works and what
+outputs it can produce, without going into much detail. For a more in-depth
+tutorial, including suggestions on how to ensure your results are statistically
+valid, have a look at the next vignette.
 
 ## Creating a project and loading data
 
-PlasmoMAPI works using projects, which are essentially just lists containing all
-data, input and outputs in one place. 
+*PlasmoMAPI* works using projects, which are essentially just lists containing all
+data, input and outputs in one place. We start by creating a new project:
 
 ```{r}
 # create new project
 p <- pm_project()
 ```
 
-Next we need some data to work with. PlasmoMAPI requires two types of data: i)
+Now we need some data to work with. *PlasmoMAPI* requires two types of data: i)
 spatial coordinates (longitude and latitude) of sampling locations, ii) pairwise
-statistical values between all sampling locations - most likely estimates of
-genetic relatedness. For this vignette we will use a dataset stored within the
-package, which was simulated under a simple model of genetics and epidemiology.
-Crucially these data were generated with a single *known barrier* and a single
-*known corridor* of gene flow, giving us something to aim for.
+statistical values between all sampling locations. For this vignette we will use
+a dataset stored within the package, which was simulated under a simple model of
+*P. falciparum* genetics and epidemiology. Crucially this dataset was generated
+with a **single known barrier** and a **single known corridor** of gene flow,
+giving us something to aim for.
 
 ```{r}
 # load tutorial data
@@ -57,7 +57,9 @@ tut_data <- pm_file("foo.rds")
 p <- load_coords(p, tut_data$coords$long, tut_data$coords$lat)
 ```
 
-TODO
+Use the sampling coordinates to define a hex map. We then "assign" the map,
+meaning we work out which pairwise values map to each hex, based on an
+eccentricity value.
 
 ```{r, fig.width = 6, fig.height = 4.5}
 # create and assign map
@@ -68,7 +70,9 @@ p <- assign_map(p, pb_markdown = TRUE)
 plot(p)
 ```
 
-TODO
+Load pairwise data, and produce a simple plot of spatial vs. statistical
+distance. It is very hard to see any subtle trends from this plot, as everything
+just looks like a cloud of data.
 
 ```{r, fig.width = 6, fig.height = 4.5}
 # load pairwise genetic distances into project
@@ -78,21 +82,28 @@ p <- load_data(p, tut_data$genetic_distance)
 plot_dist(p)
 ```
 
-TODO
+Run the main *PlasmoMAPI* analysis.
 
 ```{r}
 # run analysis
 p <- pm_analysis(p, pb_markdown = TRUE)
 ```
 
-TODO
+Now produce the main output of the program - a map showing the z-score of every
+hex compared to the null distribution. Areas that have significantly high/low
+z-scores are outlined in black/white, and any known features are also overlaid
+as dashed polygons. Note that the significance threshold takes into account
+multiple testing, meaning under the null model we expect to see **no significant
+hexes** 95% of the time. Hence, in this data there is actually a very strong
+signal of a barrier to gene flow at the bottom, and a corridor of gene flow on
+the right, which we know to be correct.
 
 ```{r, fig.width = 6, fig.height = 4.5}
 # plot map
 plot_map(p, barrier_list = tut_data$known_barriers)
 ```
 
-TODO
+We can also produce an interactive version of the same map:
 
 ```{r, fig.width = 6, fig.height = 4.5}
 # plot interactive map

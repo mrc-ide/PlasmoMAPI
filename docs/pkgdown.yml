@@ -3,4 +3,5 @@ pkgdown: 1.4.1
 pkgdown_sha: ~
 articles:
   basic_tutorial: basic_tutorial.html
+  range_limited_analysis: range_limited_analysis.html
 

@@ -259,7 +259,7 @@ plot_map <- function(proj,
   if (nb > 0) {
     for (i in 1:nb) {
       plot1 <- plot1 + geom_polygon(aes_(x = ~long, y = ~lat),
-                                    col = "white", fill = NA, linetype = "dotted",
+                                    col = "white", fill = NA, linetype = "dashed",
                                     data = as.data.frame(barrier_list[[i]]))
     }
   }
