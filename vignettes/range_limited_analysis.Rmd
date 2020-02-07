@@ -1,5 +1,7 @@
 ---
 title: "Range-limited analysis"
+author: "Bob Verity and Keith Fraser"
+date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{range_limited_analysis}
@@ -21,14 +23,17 @@ library(magrittr)
 ```
 
 Sometimes barriers/corridors of gene flow can act at different spatial scales.
-For example, a river might be a barrier to human movement when on foot, but not
+For example, a river might be a barrier to human movement when on foot but not
 at longer distances because people tend to drive and so can quickly access the
-nearest road bridge. We can explore this phenomenon using *PlasmoMAPI* by
+nearest road bridge. We can explore this phenomenon in *PlasmoMAPI* by
 restricting our analysis to edges of a certain length, and ignoring anything
 outside the defined range. In some cases this can lead to sharper inference by
 reducing the amount of random noise in the data.
 
 ## Simulating and loading data
+
+We assume a uniform scatter of sampling locations, which we load into a new
+project.
 
 ```{r}
 # assume uniform scatter of sampling locations
@@ -44,14 +49,13 @@ p <- pm_project() %>%
 
 As in the previous tutorial we will simulate some data with a known barrier to
 gene flow using the `get_barrier_intersect()` function. This time we will assume
-a more detailed barrier shape, to test our ability to detect small and complex
+a more detailed barrier shape to test our ability to detect small and complex
 features.
 
 ```{r, fig.width = 6, fig.height = 4.5}
 # create barrier polygon
-barrier_list <- list(data.frame(long = c(-5,0,6,7,4,-3,-2,3,4,3,-5),
-                                lat = c(5,7,6,0,-8,-4,-3,-4,-1,4,4)))
-barrier_list[[1]] <- rbind(barrier_list[[1]], barrier_list[[1]][1,])
+barrier_list <- list(data.frame(long = c(-5,0,6,7,4,-3,-2,3,4,3,-5,-5),
+                                lat = c(5,7,6,0,-8,-4,-3,-4,-1,4,4,5)))
 
 # plot map with barriers
 plot_map(p, barrier_list = barrier_list)
@@ -61,9 +65,9 @@ The argument `max_barrier_range` in `get_barrier_intersect()` allows us to
 define a spatial distance beyond which the barrier penalty does not apply, for
 example if `max_barrier_range = 100` and two sampling locations are either side
 of the barrier and separated by 110km then the barrier effectively does not
-exist between these locations. We will use this to generate genetic distances,
-this time on the [-Inf,Inf] interval rather than the [0,1] interval just for a
-change.
+exist between these locations. We will use this mtehod to simulate pairwise
+genetic distances between sampling locations, this time on the [-Inf,Inf]
+interval rather than the [0,1] interval just for a change.
 
 ```{r, fig.width = 6, fig.height = 4.5}
 # calculate distances, taking into account barriers
@@ -83,15 +87,18 @@ genetic distance.
 
 ```{r, fig.width = 6, fig.height = 4.5}
 # load data and produce simple scatterplot
-p <- load_data(p, genetic_distance, check_delete_output = FALSE)
+p <- load_data(p, genetic_distance)
 
 plot_dist(p)
 ```
 
 As before, it is quite difficult to see any systematic pattern in the data.
 
+
+## Running a range-limited analysis
+
 Now let's see what happens when we carry out the *PlasmoMAPI* analysis over the
-entire range of data, and a second time restricting to distances less than
+entire range of data, and then a second time restricting to distances less than
 500km:
 
 ```{r, fig.width = 6, fig.height = 4.5}
@@ -107,9 +114,9 @@ plot_map(p, barrier_list = barrier_list)
 Notice that we didn't find any areas of significance when using the whole
 dataset because the random noise at distances above 500km was washing out any
 signal, but when restricting to short distances the barrier becomes clear.
-However, throwing data away like this comes at a cost - notice there are now
+However, throwing data away like this comes at a cost - there are now
 quite a number of hexes that are below our required coverage level, and so are
-shown in grey. The more we subset the range the fewer edges we we have at our
+shown in grey. The more we subset the data, the fewer edges we we have at our
 disposal and the fewer hexes will pass our coverage checks. So, performing a
 focussed analysis like this is a trade-off between precision and statistical
 power, and how far you can push it will depend on the number of sampling
