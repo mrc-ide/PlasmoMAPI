@@ -27,7 +27,7 @@ comparing the observed distribution of genetic distances to what we would expect
 under the null hypothesis of no systematic spatial pattern in the data.
 
 This vignette is intended to give a flavour for how *PlasmoMAPI* works and what
-outputs it can produce, without going into much detail. For a more in-depth
+outputs it can produce without going into much detail. For a more in-depth
 tutorial, including suggestions on how to ensure your results are statistically
 valid, have a look at the next vignette.
 
@@ -51,14 +51,14 @@ giving us something to aim for.
 
 ```{r}
 # load tutorial data
-tut_data <- pm_file("foo.rds")
+tut_data <- pm_file("general_idea_data.rds")
 
 # load sampling coordinates into project
 p <- load_coords(p, tut_data$coords$long, tut_data$coords$lat)
 ```
 
 Use the sampling coordinates to define a hex map. We then "assign" the map,
-meaning we work out which pairwise values map to each hex, based on an
+meaning we work out which pairwise values correspong to each hex based on an
 eccentricity value.
 
 ```{r, fig.width = 6, fig.height = 4.5}

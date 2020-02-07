@@ -9,6 +9,8 @@ navbar:
   left:
     - text: "Vignettes"
       menu:
+        - text: "Installation"
+          href: articles/installation.html
         - text: "Basic tutorial"
           href: articles/basic_tutorial.html
         - text: "Range-limited analysis"
