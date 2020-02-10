@@ -13,7 +13,8 @@ plot_map(
   plot_significance = TRUE,
   empirical_tail = "both",
   alpha_raw = 0.05,
-  barrier_list = list()
+  base_plot = NULL,
+  poly_list = list()
 )
 }
 \arguments{
@@ -44,8 +45,10 @@ high/low values. This raw value is Bonferroni corrected based on the
 effective number of independent samples, and hence applies to the whole map
 and not just a single hex.}
 
-\item{barrier_list}{optional list of polygon coordinates that are added to
-plot.}
+\item{base_plot}{optional base plot (object of class \code{ggplot}) on which
+this function builds. If \code{NULL} then a simple empty plot is used.}
+
+\item{poly_list}{optional list of polygon coordinates that are added to plot.}
 }
 \description{
 Plot hex map of PlasmoMAPI output.

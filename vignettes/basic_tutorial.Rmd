@@ -100,7 +100,7 @@ the right, which we know to be correct.
 
 ```{r, fig.width = 6, fig.height = 4.5}
 # plot map
-plot_map(p, barrier_list = tut_data$known_barriers)
+plot_map(p, poly_list = tut_data$known_barriers)
 ```
 
 We can also produce an interactive version of the same map:

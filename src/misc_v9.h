@@ -1,21 +1,24 @@
 
 #pragma once
 
+// comment out this definition to switch from Rcpp to C++
 #define RCPP_ACTIVE
 
 #ifdef RCPP_ACTIVE
 #include <Rcpp.h>
 #endif
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <limits>
 #include <chrono>
+#include <cfloat>
 
 //------------------------------------------------
 // define very large/small numbers for catching overflow/underflow problems
 const int OVERFLO_INT = INT_MAX/100;
-const double  OVERFLO_DOUBLE = DBL_MAX/100;
+const double OVERFLO_DOUBLE = DBL_MAX/100;
 const double UNDERFLO_DOUBLE = DBL_MIN/100;
 
 //------------------------------------------------
@@ -73,14 +76,14 @@ std::vector<int> seq_int(int from, int to, int by = 1);
 //------------------------------------------------
 // Euclidian distance between points in 2 dimensions
 template<class TYPE>
-double dist_euclid_2d(const TYPE x1, const TYPE y1, const TYPE x2, const TYPE y2) {
+double dist_euclid_2d(TYPE x1, TYPE y1, TYPE x2, TYPE y2) {
   return sqrt(sq(x1 - x2) + sq(y1 - y2));
 }
 
 //------------------------------------------------
 // push back multiple values to vector
 template<class TYPE>
-void push_back_multiple(std::vector<TYPE> &lhs, std::vector<TYPE> &rhs) {
+void push_back_multiple(std::vector<TYPE> &lhs, const std::vector<TYPE> &rhs) {
   lhs.insert(lhs.end(), rhs.begin(), rhs.end());
 }
 
@@ -113,7 +116,7 @@ bool is_in_vector(TYPE x, const std::vector<TYPE> &v) {
 template<class TYPE>
 std::vector<TYPE> unique(const std::vector<TYPE> &v) {
   std::vector<TYPE> ret;
-  for (int i=0; i<int(v.size()); ++i) {
+  for (int i = 0; i < int(v.size()); ++i) {
     if (find(ret.begin(), ret.end(), v[i]) == ret.end()) {
       ret.push_back(v[i]);
     }
@@ -122,8 +125,29 @@ std::vector<TYPE> unique(const std::vector<TYPE> &v) {
 }
 
 //------------------------------------------------
+// remove duplicated values from an already-sorted vector
+template<class TYPE>
+void remove_duplicates(std::vector<TYPE> &v) {
+  int v_size = int(v.size());
+  if (v_size == 1) {
+    return;
+  }
+  for (int i = 1; i < v_size; ++i) {
+    if (i >= int(v.size())) {
+      break;
+    }
+    if (v[i] == v[i-1]) {
+      v.erase(v.begin()+i);
+      i--;
+    }
+  }
+}
+
+//------------------------------------------------
 // update timer and optionally print time difference
-void chrono_timer(std::chrono::high_resolution_clock::time_point &t0, bool print_diff = true);
+void chrono_timer(std::chrono::high_resolution_clock::time_point &t0,
+                  std::string message_before = "completed in ",
+                  bool print_diff = true);
 
 //------------------------------------------------
 // helper function for printing a single value or series of values
@@ -147,17 +171,17 @@ void print(TYPE first, Args... args) {
 }
 
 //------------------------------------------------
-// helper function for printing contents of a vector
+// helper function for printing contents of a vector or set
 template<class TYPE>
-void print_vector(std::vector<TYPE> &x) {
+void print_vector(const TYPE &x) {
 #ifdef RCPP_ACTIVE
-  for (int i=0; i<x.size(); i++) {
-    Rcpp::Rcout << x[i] << " ";
+  for (auto i : x) {
+    Rcpp::Rcout << i << " ";
   }
   Rcpp::Rcout << "\n";
 #else
-  for (int i=0; i<x.size(); i++) {
-    std::cout << x[i] << " ";
+  for (auto i : x) {
+    std::cout << i << " ";
   }
   std::cout << "\n";
 #endif
@@ -166,8 +190,8 @@ void print_vector(std::vector<TYPE> &x) {
 //------------------------------------------------
 // helper function for printing contents of a matrix
 template<class TYPE>
-void print_matrix(std::vector< std::vector<TYPE> > &x) {
-  for (int i=0; i<x.size(); i++) {
+void print_matrix(const std::vector<std::vector<TYPE>> &x) {
+  for (int i = 0; i < x.size(); ++i) {
     print_vector(x[i]);
   }
 #ifdef RCPP_ACTIVE
@@ -180,15 +204,15 @@ void print_matrix(std::vector< std::vector<TYPE> > &x) {
 //------------------------------------------------
 // helper function for printing contents of a 3D array
 template<class TYPE>
-void print_array(std::vector< std::vector< std::vector<TYPE> > > &x) {
+void print_array(const std::vector<std::vector<std::vector<TYPE>>> &x) {
 #ifdef RCPP_ACTIVE
-  for (int i=0; i<x.size(); i++) {
+  for (int i = 0; i < x.size(); ++i) {
     Rcpp::Rcout << "--- slice " << i+1 << " ---\n";
     print_matrix(x[i]);
   }
   Rcpp::Rcout << "\n";
 #else
-  for (int i=0; i<x.size(); i++) {
+  for (int i = 0; i < x.size(); ++i) {
     std::cout << "--- slice " << i+1 << " ---\n";
     print_matrix(x[i]);
   }
@@ -198,7 +222,7 @@ void print_array(std::vector< std::vector< std::vector<TYPE> > > &x) {
 
 //------------------------------------------------
 // print simple bar-graph composed of title followed by n stars
-void print_stars(int n = 10, std::string title = "");
+void print_stars(int n = 50, std::string title = "");
 
 //------------------------------------------------
 // print "foo", with optional number e.g. "foo2"
@@ -295,3 +319,21 @@ std::vector<std::vector<std::vector<int>>> rcpp_to_array_int(Rcpp::List x);
 // converts input from Rcpp::List format to vector<vector<vector<double>>> format.
 std::vector<std::vector<std::vector<double>>> rcpp_to_array_double(Rcpp::List x);
 #endif
+
+//------------------------------------------------
+// read values from comma-separated text file to vector<int>
+std::vector<int> file_to_vector_int(std::string file_path);
+
+//------------------------------------------------
+// read values from comma-separated text file to vector<double>
+std::vector<double> file_to_vector_double(std::string file_path);
+
+//------------------------------------------------
+// read values from text file to vector<vector<double>>. Text file should be
+// delimited by first line break, then comma. Lines do not all need to be same
+// length, i.e. jagged matrices are allowed.
+std::vector<std::vector<double>> file_to_matrix_double(std::string file_path);
+
+//------------------------------------------------
+// calculate Cholesky decomposition of positive definite matrix sigma
+void cholesky(std::vector<std::vector<double>> &chol, const std::vector<std::vector<double>> &sigma);

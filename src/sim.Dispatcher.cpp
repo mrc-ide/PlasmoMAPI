@@ -1,6 +1,6 @@
 
 #include "sim.Dispatcher.h"
-#include "probability.h"
+#include "probability_v10.h"
 #include "array.h"
 
 #include <tuple>

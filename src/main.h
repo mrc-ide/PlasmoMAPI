@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "misc_v4.h"
+#include "misc_v9.h"
 
 #ifdef RCPP_ACTIVE
 #include <Rcpp.h>

@@ -115,39 +115,50 @@ pm_proj.check_coords_loaded <- function(proj) {
 #'   create a hex grid around these points.
 #'
 #' @param proj object of class \code{pm_project}.
-#' @param hex_size size of hexagons.
+#' @param hex_width width of hexagons.
+#' @param border_coords dataframe giving coordinates (long, lat) of a polygon
+#'   within which the map is defined. If null then this is generated
+#'   automatically from the convex hull of the sampling locations.
 #'
 #' @import sf
 #' @importFrom grDevices chull
 #' @export
 
-create_map <- function(proj, hex_size = NULL) {
+create_map <- function(proj, hex_width = NULL, border_coords = NULL) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
-  if (!is.null(hex_size)) {
-    assert_single_pos(hex_size, zero_allowed = FALSE)
+  if (!is.null(hex_width)) {
+    assert_single_pos(hex_width, zero_allowed = FALSE)
+  }
+  if (!is.null(border_coords)) {
+    assert_dataframe(border_coords)
+    assert_in(c("long", "lat"), names(border_coords))
+    assert_vector_numeric(border_coords$long)
+    assert_vector_numeric(border_coords$lat)
   }
   
   message("Creating hex map")
   
   # calculate default hex size from data
-  if (is.null(hex_size)) {
+  if (is.null(hex_width)) {
     min_range <- min(apply(proj$data$coords, 2, function(x) diff(range(x))))
-    hex_size <- min_range/20
-    message(sprintf("hex size chosen automatically: %s", signif(hex_size, 3)))
+    hex_width <- min_range/20
+    message(sprintf("hex size chosen automatically: %s", signif(hex_width, 3)))
   }
   
-  # get convex hull of data
-  ch_data <- chull(proj$data$coords)
-  ch_data_coords <- as.matrix(proj$data$coords[c(ch_data, ch_data[1]),])
+  # get border_coords from convex hull of data
+  if (is.null(border_coords)) {
+    ch_data <- chull(proj$data$coords)
+    border_coords <- proj$data$coords[c(ch_data, ch_data[1]),]
+  }
   
   # get convex hull into sf polygon format
-  bounding_poly <- sf::st_sfc(st_polygon(list(ch_data_coords)))
+  bounding_poly <- sf::st_sfc(st_polygon(list(as.matrix(border_coords))))
   
   # make sf hex grid from poly
-  hex_polys <- sf::st_make_grid(bounding_poly, cellsize = hex_size, square = FALSE)
+  hex_polys <- sf::st_make_grid(bounding_poly, cellsize = hex_width, square = FALSE)
   nhex <- length(hex_polys)
   
   # get hex centroid points
@@ -160,7 +171,7 @@ create_map <- function(proj, hex_size = NULL) {
   # add to project
   proj$map$hex <- hex_polys
   proj$map$hex_centroid <- hex_pts_df
-  proj$map$hex_size <- hex_size
+  proj$map$hex_width <- hex_width
   
   # return invisibly
   invisible(proj)
@@ -205,7 +216,7 @@ assign_map <- function(proj,
   assert_custom_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   pm_proj.check_map_loaded(proj)
-  assert_single_bounded(eccentricity, inclusive_left = FALSE, inclusive_right = FALSE)
+  assert_single_bounded(eccentricity, inclusive_left = FALSE, inclusive_right = TRUE)
   assert_single_logical(report_progress)
   assert_single_logical(pb_markdown)
   
@@ -228,7 +239,7 @@ assign_map <- function(proj,
                node_lat = proj$data$coords$lat,
                hex_long = proj$map$hex_centroid$long,
                hex_lat = proj$map$hex_centroid$lat,
-               hex_size = proj$map$hex_size,
+               hex_width = proj$map$hex_width,
                eccentricity = eccentricity,
                report_progress = report_progress,
                pb_markdown = pb_markdown)
@@ -330,6 +341,11 @@ pm_proj.check_data_loaded <- function(proj) {
 #'   the analysis. Anything outside this range is ignored.
 #' @param min_group_size minimum number of edges within a spatial permutation
 #'   group, otherwise edges within this group are replaced with \code{NA}.
+#' @param aggregate_clusters if \code{TRUE} then observations from the same
+#'   sampling location are aggregated prior to running the analysis. The
+#'   statistical value between locations X and Y becomes the mean of all
+#'   pairwise values sampled at X and Y. If \code{FALSE} then each value is
+#'   considered separately.
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console during the permutation testing procedure.
 #' @param pb_markdown whether to run progress bars in markdown mode, in which
@@ -343,6 +359,7 @@ pm_analysis <- function(proj,
                         n_perms = 1e3,
                         n_breaks = 50, min_dist = 0, max_dist = Inf,
                         min_group_size = 5,
+                        aggregate_clusters = FALSE,
                         report_progress = TRUE,
                         pb_markdown = FALSE) {
   
@@ -361,6 +378,7 @@ pm_analysis <- function(proj,
   assert_gr(max_dist, min_dist)
   assert_single_pos_int(min_group_size)
   assert_greq(min_group_size, 2)
+  assert_single_logical(aggregate_clusters)
   assert_single_logical(report_progress)
   assert_single_logical(pb_markdown)
   
@@ -373,6 +391,34 @@ pm_analysis <- function(proj,
   # convert spatial and statistical values to x and y for convenience
   x <- as.vector(proj$data$spatial_dist)
   y <- as.vector(proj$data$stat_dist)
+  
+  # aggregate by sampling location if needed
+  if (aggregate_clusters) {
+    
+    # get index of coordinates relative to unique list
+    u <- unique(proj$data$coords)
+    u_match <- mapply(function(i) {
+      which(proj$data$coords$long == u$long[i] & proj$data$coords$lat == u$lat[i])
+    }, 1:nrow(u), SIMPLIFY = TRUE)
+    
+    # aggregate if any duplicates
+    if (any(mapply(length, u_match) > 1)) {
+      
+      # aggregate by u_match
+      nu <- length(u_match)
+      y_raw <- as.matrix(proj$data$stat_dist)
+      y <- unlist(mapply(function(i) {
+        mapply(function(j) {
+          mean(y_raw[u_match[[i]], u_match[[j]]])
+        }, (i+1):nu)
+      }, 1:(nu-1), SIMPLIFY = FALSE))
+      
+      # get corresponding spatial distances
+      w <- mapply(function(x) x[1], u_match)
+      x <- as.vector(as.dist(as.matrix(proj$data$spatial_dist)[w,w]))
+      
+    }
+  }
   
   # keep track of original index of these values to be used later in subsetting
   index <- 1:length(x)
