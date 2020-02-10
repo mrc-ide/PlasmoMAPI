@@ -4,7 +4,7 @@
 #include "sim.Parameters.h"
 #include "sim.Mosquito.h"
 #include "array.h"
-#include "sim.Sampler.h"
+#include "Sampler_v3.h"
 
 #include <vector>
 

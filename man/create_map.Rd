@@ -4,12 +4,16 @@
 \alias{create_map}
 \title{Create map composed of hex tiles}
 \usage{
-create_map(proj, hex_size = NULL)
+create_map(proj, hex_width = NULL, border_coords = NULL)
 }
 \arguments{
 \item{proj}{object of class \code{pm_project}.}
 
-\item{hex_size}{size of hexagons.}
+\item{hex_width}{width of hexagons.}
+
+\item{border_coords}{dataframe giving coordinates (long, lat) of a polygon
+within which the map is defined. If null then this is generated
+automatically from the convex hull of the sampling locations.}
 }
 \description{
 Given an PlasmoMAPI project with sampling coordinates already loaded,

@@ -146,8 +146,9 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
 #'   high/low values. This raw value is Bonferroni corrected based on the
 #'   effective number of independent samples, and hence applies to the whole map
 #'   and not just a single hex.
-#' @param barrier_list optional list of polygon coordinates that are added to
-#'   plot.
+#' @param base_plot optional base plot (object of class \code{ggplot}) on which
+#'   this function builds. If \code{NULL} then a simple empty plot is used.
+#' @param poly_list optional list of polygon coordinates that are added to plot.
 #' 
 #' @import ggplot2
 #' @importFrom viridisLite magma
@@ -161,7 +162,8 @@ plot_map <- function(proj,
                      plot_significance = TRUE,
                      empirical_tail = "both",
                      alpha_raw = 0.05,
-                     barrier_list = list()) {
+                     base_plot = NULL,
+                     poly_list = list()) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
@@ -172,14 +174,17 @@ plot_map <- function(proj,
   assert_single_string(empirical_tail)
   assert_in(empirical_tail, c("left", "right", "both"))
   assert_single_bounded(alpha_raw)
-  assert_list(barrier_list)
-  nb <- length(barrier_list)
+  if (!is.null(base_plot)) {
+    assert_custom_class(base_plot, "ggplot")
+  }
+  assert_list(poly_list)
+  nb <- length(poly_list)
   if (nb > 0) {
     for (i in 1:nb) {
-      assert_dataframe(barrier_list[[i]])
-      assert_in("long", names(barrier_list[[i]]))
-      assert_in("lat", names(barrier_list[[i]]))
-      assert_eq(barrier_list[[i]][1,], barrier_list[[i]][nrow(barrier_list[[i]]),], 
+      assert_dataframe(poly_list[[i]])
+      assert_in("long", names(poly_list[[i]]))
+      assert_in("lat", names(poly_list[[i]]))
+      assert_eq(poly_list[[i]][1,], poly_list[[i]][nrow(poly_list[[i]]),], 
                 message = "barrier polygons must be closed, i.e. the last node coordinate equals the first")
     }
   }
@@ -207,8 +212,10 @@ plot_map <- function(proj,
   y[proj$output$hex_coverage < min_hex_coverage] <- NA
   
   # produce basic plot
-  plot1 <- ggplot() + theme_bw() + theme(panel.grid.major = element_blank(),
-                                         panel.grid.minor = element_blank())
+  if (is.null(base_plot)) {
+    plot1 <- ggplot() + theme_bw() + theme(panel.grid.major = element_blank(),
+                                           panel.grid.minor = element_blank())
+  }
   
   # add hexs
   if (plot_hex_grid) {
@@ -227,13 +234,13 @@ plot_map <- function(proj,
     # outline low values
     w <- hex_signif$which_lower
     if (length(w) != 0) {
-      merged_poly_lower <- get_merged_poly(proj$map$hex[w], d = proj$map$hex_size/10)
+      merged_poly_lower <- get_merged_poly(proj$map$hex[w], d = proj$map$hex_width/10)
       plot1 <- plot1 + geom_sf(color = "white", fill = NA, data = merged_poly_lower)
     }
     
     w <- hex_signif$which_upper
     if (length(w) != 0) {
-      merged_poly_upper <- get_merged_poly(proj$map$hex[w], d = proj$map$hex_size/10)
+      merged_poly_upper <- get_merged_poly(proj$map$hex[w], d = proj$map$hex_width/10)
       plot1 <- plot1 + geom_sf(color = "black", fill = NA, data = merged_poly_upper)
     }
     
@@ -260,7 +267,7 @@ plot_map <- function(proj,
     for (i in 1:nb) {
       plot1 <- plot1 + geom_polygon(aes_(x = ~long, y = ~lat),
                                     col = "white", fill = NA, linetype = "dashed",
-                                    data = as.data.frame(barrier_list[[i]]))
+                                    data = as.data.frame(poly_list[[i]]))
     }
   }
   

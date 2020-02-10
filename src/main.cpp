@@ -1,7 +1,7 @@
 
 #include "main.h"
 #include "utils.h"
-#include "probability.h"
+#include "probability_v10.h"
 #include "sim.Parameters.h"
 #include "sim.Dispatcher.h"
 
@@ -22,7 +22,7 @@ Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List
   vector<double> node_lat = rcpp_to_vector_double(args["node_lat"]);      //Latitude of data nodes
   vector<double> hex_long = rcpp_to_vector_double(args["hex_long"]);      //Longitude of hexes
   vector<double> hex_lat = rcpp_to_vector_double(args["hex_lat"]);        //Latitude of hexes
-  double hex_size = rcpp_to_double(args["hex_size"]);                     //Size (width) of hexes
+  double hex_width = rcpp_to_double(args["hex_width"]);                   //Width of hexes
   double eccentricity = rcpp_to_double(args["eccentricity"]);             //Eccentricity of ellipses (see help for details)
   bool report_progress = rcpp_to_bool(args["report_progress"]);           //Whether to update progress bar
   bool pb_markdown = rcpp_to_bool(args["pb_markdown"]);                   //Whether to run in markdown-safe mode
@@ -50,10 +50,6 @@ Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List
       }
     }
     
-    //if (report_progress) {
-    //  update_progress(args_progress, "pb", hex+1, n_hex);
-    //}
-    
     // loop through pairwise nodes
     int i = 0;
     for (int node1 = 0; node1 < (n_node-1); ++node1) {
@@ -61,10 +57,10 @@ Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List
         i++;
         
         // determine whether ellipse intersects this hex
-        bool intersects = hex_intersects_ellipse(hex_long[hex], hex_lat[hex], hex_size,
-                                                 node_long[node1], node_lat[node1],
-                                                 node_long[node2], node_lat[node2],
-                                                 eccentricity);
+        bool intersects = collision_test_hex_ellipse(hex_long[hex], hex_lat[hex], hex_width,
+                                                     node_long[node1], node_lat[node1],
+                                                     node_long[node2], node_lat[node2],
+                                                     eccentricity);
         
         // push back edge index if intersects
         if (intersects) {
@@ -141,11 +137,6 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
         }
       }
     }
-    
-    // report progress
-    // if (report_progress) {
-    //  update_progress(args_progress, "pb", perm+1, n_perms);
-    //}
     
     // resample edge values
     for (unsigned int i = 0; i < n_edge; ++i) {

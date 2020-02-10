@@ -4,7 +4,7 @@
 #include <Rcpp.h>
 #include <tuple>
 
-#include "sim.Sampler.h"
+#include "Sampler_v3.h"
 
 //------------------------------------------------
 // parameters of individual-based simulation model
