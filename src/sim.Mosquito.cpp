@@ -20,12 +20,12 @@ void Mosquito::init(Parameters* param_ptr) {
 void Mosquito::new_infection(Host* host_ptr) {
   
   // choose two haplotypes at random to copy from host
-  int rnd1 = sample2(1,host_ptr->n_infective_haplotypes_total);
-  int rnd2 = sample2(1,host_ptr->n_infective_haplotypes_total);
+  int rnd1 = sample2(1, host_ptr->n_infective_haplotypes_total);
+  int rnd2 = sample2(1, host_ptr->n_infective_haplotypes_total);
   
   // copy first haplotype from host
   int tmp1 = 0;
-  for (int i=0; i<max_innoculations; ++i) {
+  for (int i = 0; i < max_innoculations; ++i) {
     tmp1 += host_ptr->n_infective_haplotypes[i];
     if (tmp1 >= rnd1) {
       haplotype1 = host_ptr->haplotypes[i][tmp1-rnd1];

@@ -36,11 +36,11 @@ Dispatcher::Dispatcher(Parameters &parameters, Rcpp::Function &update_progress, 
   // blood-stage) are scheduled for future time steps using these objects. This
   // avoids the need to loop through every host in every time step, as we only
   // need to modify the hosts for which we have scheduled events.
-  schedule_death = vector<set<int>>(max_time+1);
-  schedule_Eh_to_Ih = vector<vector<pair<int, int>>>(max_time+1);
-  schedule_Ih_to_Sh = vector<vector<pair<int, int>>>(max_time+1);
-  schedule_infective = vector<vector<pair<int, int>>>(max_time+1);
-  schedule_infective_recovery = vector<vector<pair<int, int>>>(max_time+1);
+  schedule_death = vector<set<int>>(max_time);
+  schedule_Eh_to_Ih = vector<vector<pair<int, int>>>(max_time);
+  schedule_Ih_to_Sh = vector<vector<pair<int, int>>>(max_time);
+  schedule_infective = vector<vector<pair<int, int>>>(max_time);
+  schedule_infective_recovery = vector<vector<pair<int, int>>>(max_time);
   
   // counts of host types
   H_total = n_demes*H;
@@ -106,7 +106,7 @@ Dispatcher::Dispatcher(Parameters &parameters, Rcpp::Function &update_progress, 
   Sv_index = array_2d_int(n_demes);
   int M_cum = 0;
   for (int k = 0; k < n_demes; ++k) {
-    Sv_index[k] = seq_int(M_cum, M_cum+param_ptr->M_vec[k]-1);
+    Sv_index[k] = seq_int(M_cum, M_cum + param_ptr->M_vec[k] - 1);
     M_cum += param_ptr->M_vec[k];
   }
   Ev_death = array_3d_int(n_demes, v);
@@ -137,260 +137,269 @@ void Dispatcher::simulate() {
   int index_time_out = 0;
   
   // vector for randomly changing the order in which migration is applied
-  vector<int> mig_order = seq_int(0, param_ptr->n_mig_list-1);
+  vector<int> mig_order = seq_int(0, param_ptr->n_mig_list - 1);
   
   // loop through daily time steps
-  for (int t = 1; t <= max_time; t++) {
+  for (int t = 0; t < max_time; ++t) {
     
     // report progress
     if (param_ptr->report_progress) {
-      (*update_progress_ptr)(*args_progress_ptr, "pb", t, max_time);
+      (*update_progress_ptr)(*args_progress_ptr, "pb", t + 1, max_time);
     }
     
-    // update ring buffer index
-    ringtime = (ringtime == v-1) ? 0 : ringtime+1;
-    
-    
-    //-------- MIGRATION --------
-    reshuffle(mig_order);
-    for (int i=0; i<param_ptr->n_mig_list; ++i) {
+    // skip all dynamics if t=0. Ensures that user-defined starting conditions
+    // are the first values stored in output
+    if (t > 0) {
       
-      // draw number of migrants and skip over if zero
-      double prob_migration = get<2>(param_ptr->mig_list[mig_order[i]]);
-      int n_migrants = rbinom1(H, prob_migration);
-      if (n_migrants == 0) {
-        continue;
+      // update ring buffer index
+      ringtime = (ringtime == v - 1) ? 0 : ringtime + 1;
+      
+      
+      //-------- MIGRATION --------
+  #ifdef FOO
+      reshuffle(mig_order);
+      for (int i = 0; i < param_ptr->n_mig_list; ++i) {
+        
+        // draw number of migrants and skip over if zero
+        double prob_migration = get<2>(param_ptr->mig_list[mig_order[i]]);
+        int n_migrants = rbinom1(H, prob_migration);
+        if (n_migrants == 0) {
+          continue;
+        }
+        
+        // get demes to swap between
+        int deme1 = get<0>(param_ptr->mig_list[mig_order[i]]);
+        int deme2 = get<1>(param_ptr->mig_list[mig_order[i]]);
+        
+        // loop through number of migrants
+        for (int j=0; j<n_migrants; ++j) {
+          
+          // draw migrant index in both demes
+          int rnd1 = sample2(0,H-1);
+          int rnd2 = sample2(0,H-1);
+          int index1 = host_index[deme1][rnd1];
+          int index2 = host_index[deme2][rnd2];
+          
+          // swap host indices
+          host_index[deme1][rnd1] = index2;
+          host_index[deme2][rnd2] = index1;
+          
+          // move infectives as needed
+          vector<int>::iterator it = find(host_infective_index[deme1].begin(), host_infective_index[deme1].end(), index1);
+          if (it != host_infective_index[deme1].end()) {
+            int tmp1 = distance(host_infective_index[deme1].begin(), it);
+            host_infective_index[deme2].push_back(host_infective_index[deme1][tmp1]);
+            quick_erase(host_infective_index[deme1], tmp1);
+          }
+          it = find(host_infective_index[deme2].begin(), host_infective_index[deme2].end(), index2);
+          if (it != host_infective_index[deme2].end()) {
+            int tmp1 = distance(host_infective_index[deme2].begin(), it);
+            host_infective_index[deme1].push_back(host_infective_index[deme2][tmp1]);
+            quick_erase(host_infective_index[deme2], tmp1);
+          }
+          
+          // update host properties
+          host_pop[index1].deme = deme2;
+          host_pop[index2].deme = deme1;
+          
+          // update deme counts
+          if (host_pop[index1].get_n_asexual() == 0) {
+            Sh[deme1]--;
+            Sh[deme2]++;
+          } else if (host_pop[index1].n_infected == 0) {
+            Eh[deme1]--;
+            Eh[deme2]++;
+          } else {
+            Ih[deme1]--;
+            Ih[deme2]++;
+          }
+          if (host_pop[index2].get_n_asexual() == 0) {
+            Sh[deme2]--;
+            Sh[deme1]++;
+          } else if (host_pop[index2].n_infected == 0) {
+            Eh[deme2]--;
+            Eh[deme1]++;
+          } else {
+            Ih[deme2]--;
+            Ih[deme1]++;
+          }
+          
+        }
+      }  // end migration i loop
+  #endif
+      
+      // loop through demes
+      for (int k = 0; k < n_demes; ++k) {
+        
+        
+        //-------- MOSQUITO EVENTS --------
+        
+        // carry out Ev death
+        int Ev_death_size = Ev_death[k][ringtime].size();
+        if (Ev_death_size > 0) {
+          push_back_multiple(Sv_index[k], Ev_death[k][ringtime]);
+          Ev_death[k][ringtime].clear();
+          Ev[k] -= Ev_death_size;
+          Sv[k] += Ev_death_size;
+        }
+        
+        // carry out Iv death
+        int Iv_death = rbinom1(Iv[k], prob_v_death);
+        for (int i = 0; i < Iv_death; ++i) {
+          int rnd1 = sample2(0, Iv[k]-1-i);
+          int this_mosq = Iv_index[k][rnd1];
+          mosq_pop[this_mosq].death();
+          Sv_index[k].push_back(this_mosq);
+          quick_erase(Iv_index[k], rnd1);
+        }
+        Sv[k] += Iv_death;
+        Iv[k] -= Iv_death;
+        
+        // move Ev into Iv
+        int Ev_to_Iv_size = Ev_to_Iv[k][ringtime].size();
+        if (Ev_to_Iv_size > 0) {
+          push_back_multiple(Iv_index[k], Ev_to_Iv[k][ringtime]);
+          Ev_to_Iv[k][ringtime].clear();
+          Ev[k] -= Ev_to_Iv_size;
+          Iv[k] += Ev_to_Iv_size;
+        }
+        
+        // draw number of new bites on infective hosts. Note, the rate is already
+        // scaled by infectivity, meaning bites that do not lead to mosquito
+        // infection are ignored automatically
+        int n_host_infective = host_infective_index[k].size();                  // number of infective hosts in this deme
+        double rate_v_infected = a*infectivity*n_host_infective/double(H);      // rate of mosquito biting infective host and becoming infected
+        double prob_v_infected_or_death = 1 - exp(-(rate_v_infected + mu));     // probability of mosquito becoming infected or dying (competing hazards)
+        double prob_v_infected = rate_v_infected/(rate_v_infected + mu);        // relative probability of mosquito becoming infected vs. dying
+        int v_infected_or_death = rbinom1(Sv[k], prob_v_infected_or_death);     // number of susceptible mosquitoes becoming infected or dying
+        int v_infected = rbinom1(v_infected_or_death, prob_v_infected);         // number of susceptible mosquitoes becoming infected
+        
+        // loop through infective bites
+        for (int i = 0; i < v_infected; ++i) {
+          
+          // choose mosquito at random from susceptibles
+          int rnd1 = sample2(0, Sv[k]-1);
+          int this_mosq = Sv_index[k][rnd1];
+          
+          // drop from Sv
+          quick_erase(Sv_index[k], rnd1);
+          
+          // the majority of new mosquito infections will die in lag phase. If so
+          // then no need to store genotype, instead simply add to Ev_death object
+          // to schedule move back to susceptible state (equivalent to death) at
+          // future time point.
+          int v_time_death = rgeom1(prob_v_death) + 1;
+          if (v_time_death <= v) {
+            
+            // schedule death
+            Ev_death[k][(ringtime+v_time_death) % v].push_back(this_mosq);
+            
+          } else {
+            
+            // choose host at random from infectives
+            int rnd2 = sample2(0, host_infective_index[k].size()-1);
+            int this_host = host_infective_index[k][rnd2];
+            
+            // infect mosquito
+            mosq_pop[this_mosq].new_infection(&host_pop[this_host]);
+            
+            // schedule move to Iv
+            Ev_to_Iv[k][ringtime].push_back(this_mosq);
+          }
+          
+          // update deme counts
+          Sv[k]--;
+          Ev[k]++;
+          
+        } // end loop through infective bites
+        
+        //-------- NEW HUMAN EVENTS --------
+        
+        // get number of new infectious bites on humans
+        EIR[k] = a*Iv[k]/double(H);
+        double prob_h_infectious_bite = 1 - exp(-EIR[k]);            // probability of new infectious bite per host
+        int h_infectious_bite = rbinom1(H, prob_h_infectious_bite);  // total number of new infectious bites
+        
+        // apply new infectious bites
+        for (int i = 0; i < h_infectious_bite; ++i) {
+          
+          // choose host at random
+          int rnd1 = sample2(0, H-1);
+          int this_host = host_index[k][rnd1];
+          
+          // determine whether infectious bite is successful
+          if (rbernoulli1(host_pop[this_host].get_prob_infection())) {
+            
+            // infect from random mosquito
+            int rnd2 = sample2(0, Iv[k]-1);
+            int this_mosq = Iv_index[k][rnd2];
+            host_pop[this_host].new_infection(mosq_pop[this_mosq], t);
+          }
+          
+        }  // end loop through infectious bites
+        
+      } // end loop through demes
+      
+      
+      //-------- SCHEDULED HUMAN EVENTS --------
+      
+      // scheduled deaths
+      for (auto it = schedule_death[t].begin(); it != schedule_death[t].end(); ++it) {
+        int this_host = *it;
+        host_pop[this_host].death(next_host_ID, t);
+      }
+      // scheduled Eh to Ih
+      for (auto it = schedule_Eh_to_Ih[t].begin(); it != schedule_Eh_to_Ih[t].end(); ++it) {
+        int this_host = it->first;
+        int this_slot = it->second;
+        host_pop[this_host].Eh_to_Ih(this_slot);
       }
       
-      // get demes to swap between
-      int deme1 = get<0>(param_ptr->mig_list[mig_order[i]]);
-      int deme2 = get<1>(param_ptr->mig_list[mig_order[i]]);
-      
-      // loop through number of migrants
-      for (int j=0; j<n_migrants; ++j) {
-        
-        // draw migrant index in both demes
-        int rnd1 = sample2(0,H-1);
-        int rnd2 = sample2(0,H-1);
-        int index1 = host_index[deme1][rnd1];
-        int index2 = host_index[deme2][rnd2];
-        
-        // swap host indices
-        host_index[deme1][rnd1] = index2;
-        host_index[deme2][rnd2] = index1;
-        
-        // move infectives as needed
-        vector<int>::iterator it = find(host_infective_index[deme1].begin(), host_infective_index[deme1].end(), index1);
-        if (it != host_infective_index[deme1].end()) {
-          int tmp1 = distance(host_infective_index[deme1].begin(), it);
-          host_infective_index[deme2].push_back(host_infective_index[deme1][tmp1]);
-          quick_erase(host_infective_index[deme1], tmp1);
-        }
-        it = find(host_infective_index[deme2].begin(), host_infective_index[deme2].end(), index2);
-        if (it != host_infective_index[deme2].end()) {
-          int tmp1 = distance(host_infective_index[deme2].begin(), it);
-          host_infective_index[deme1].push_back(host_infective_index[deme2][tmp1]);
-          quick_erase(host_infective_index[deme2], tmp1);
-        }
-        
-        // update host properties
-        host_pop[index1].deme = deme2;
-        host_pop[index2].deme = deme1;
-        
-        // update deme counts
-        if (host_pop[index1].get_n_asexual() == 0) {
-          Sh[deme1]--;
-          Sh[deme2]++;
-        } else if (host_pop[index1].n_infected == 0) {
-          Eh[deme1]--;
-          Eh[deme2]++;
-        } else {
-          Ih[deme1]--;
-          Ih[deme2]++;
-        }
-        if (host_pop[index2].get_n_asexual() == 0) {
-          Sh[deme2]--;
-          Sh[deme1]++;
-        } else if (host_pop[index2].n_infected == 0) {
-          Eh[deme2]--;
-          Eh[deme1]++;
-        } else {
-          Ih[deme2]--;
-          Ih[deme1]++;
-        }
-        
-      }
-    }
-    
-    // loop through demes
-    for (int k=0; k<n_demes; ++k) {
-      
-      
-      //-------- MOSQUITO EVENTS --------
-      
-      // carry out Ev death
-      int Ev_death_size = Ev_death[k][ringtime].size();
-      if (Ev_death_size > 0) {
-        push_back_multiple(Sv_index[k], Ev_death[k][ringtime]);
-        Ev_death[k][ringtime].clear();
-        Ev[k] -= Ev_death_size;
-        Sv[k] += Ev_death_size;
+      // scheduled Ih to Sh
+      for (auto it = schedule_Ih_to_Sh[t].begin(); it != schedule_Ih_to_Sh[t].end(); ++it) {
+        int this_host = it->first;
+        int this_slot = it->second;
+        host_pop[this_host].Ih_to_Sh(this_slot);
       }
       
-      // carry out Iv death
-      int Iv_death = rbinom1(Iv[k], prob_v_death);
-      for (int i=0; i<Iv_death; ++i) {
-        int rnd1 = sample2(0, Iv[k]-1-i);
-        int this_mosq = Iv_index[k][rnd1];
-        mosq_pop[this_mosq].death();
-        Sv_index[k].push_back(this_mosq);
-        quick_erase(Iv_index[k], rnd1);
-      }
-      Sv[k] += Iv_death;
-      Iv[k] -= Iv_death;
-      
-      // move Ev into Iv
-      int Ev_to_Iv_size = Ev_to_Iv[k][ringtime].size();
-      if (Ev_to_Iv_size) {
-        push_back_multiple(Iv_index[k], Ev_to_Iv[k][ringtime]);
-        Ev_to_Iv[k][ringtime].clear();
-        Ev[k] -= Ev_to_Iv_size;
-        Iv[k] += Ev_to_Iv_size;
+      // scheduled become infective
+      for (auto it = schedule_infective[t].begin(); it != schedule_infective[t].end(); ++it) {
+        int this_host = it->first;
+        int this_slot = it->second;
+        host_pop[this_host].begin_infective(this_slot);
       }
       
-      // draw number of new bites on infective hosts. Note, the rate is already
-      // scaled by infectivity, meaning bites that do not lead to mosquito
-      // infection are ignored automatically
-      double rate_v_infected = a*infectivity*host_infective_index[k].size()/double(H); // rate of mosquito biting infective host and becoming infected
-      double prob_v_infected_or_death = 1 - exp(-(rate_v_infected + mu));              // probability of mosquito becoming infected or dying (competing hazards)
-      double prob_v_infected = rate_v_infected/(rate_v_infected + mu);                 // relative probability of mosquito becoming infected vs. dying
-      int v_infected_or_death = rbinom1(Sv[k], prob_v_infected_or_death);              // number of susceptible mosquitoes becoming infected or dying
-      int v_infected = rbinom1(v_infected_or_death, prob_v_infected);                  // number of susceptible mosquitoes becoming infected
-      
-      // loop through infective bites
-      for (int i=0; i<v_infected; ++i) {
-        
-        // choose mosquito at random from susceptibles
-        int rnd1 = sample2(0, Sv[k]-1);
-        int this_mosq = Sv_index[k][rnd1];
-        
-        // drop from Sv
-        quick_erase(Sv_index[k], rnd1);
-        
-        // the majority of new mosquito infections will die in lag phase. If so
-        // then no need to store genotype, instead simply add to Ev_death object
-        // to schedule move back to susceptible state (equivalent to death) at
-        // future time point.
-        int v_time_death = rgeom1(prob_v_death) + 1;
-        if (v_time_death <= v) {
-          
-          // schedule death
-          Ev_death[k][(ringtime+v_time_death) % v].push_back(this_mosq);
-          
-        } else {
-          
-          // choose host at random from infectives
-          int rnd2 = sample2(0, host_infective_index[k].size()-1);
-          int this_host = host_infective_index[k][rnd2];
-          
-          // infect mosquito
-          mosq_pop[this_mosq].new_infection(&host_pop[this_host]);
-          
-          // schedule move to Iv
-          Ev_to_Iv[k][ringtime].push_back(this_mosq);
-        }
-        
-        // update deme counts
-        Sv[k]--;
-        Ev[k]++;
-        
-      } // end loop through infective bites
-      
-      //-------- NEW HUMAN EVENTS --------
-      
-      // get number of new infectious bites on humans
-      EIR[k] = a*Iv[k]/double(H);
-      double prob_h_infectious_bite = 1 - exp(-EIR[k]);            // probability of new infectious bite per host
-      int h_infectious_bite = rbinom1(H, prob_h_infectious_bite);  // total number of new infectious bites
-      
-      // apply new infectious bites
-      for (int i=0; i<h_infectious_bite; i++) {
-        
-        // choose host at random
-        int rnd1 = sample2(0, H-1);
-        int this_host = host_index[k][rnd1];
-        
-        // determine whether infectious bite is successful
-        if (rbernoulli1(host_pop[this_host].get_prob_infection())) {
-          
-          // infect from random mosquito
-          int rnd2 = sample2(0, Iv[k]-1);
-          int this_mosq = Iv_index[k][rnd2];
-          host_pop[this_host].new_infection(mosq_pop[this_mosq], t);
-        }
-        
-      }  // end loop through infectious bites
-      
-    } // end loop through demes
-    
-    
-    //-------- SCHEDULED HUMAN EVENTS --------
-    
-    // scheduled deaths
-    for (auto it = schedule_death[t].begin(); it != schedule_death[t].end(); ++it) {
-      int this_host = *it;
-      host_pop[this_host].death(next_host_ID, t);
-    }
-    
-    // scheduled Eh to Ih
-    for (auto it = schedule_Eh_to_Ih[t].begin(); it != schedule_Eh_to_Ih[t].end(); ++it) {
-      int this_host = it->first;
-      int this_slot = it->second;
-      host_pop[this_host].Eh_to_Ih(this_slot);
-    }
-    
-    // scheduled Ih to Sh
-    for (auto it = schedule_Ih_to_Sh[t].begin(); it != schedule_Ih_to_Sh[t].end(); ++it) {
-      int this_host = it->first;
-      int this_slot = it->second;
-      host_pop[this_host].Ih_to_Sh(this_slot);
-    }
-    
-    // scheduled become infective
-    for (auto it = schedule_infective[t].begin(); it != schedule_infective[t].end(); ++it) {
-      int this_host = it->first;
-      int this_slot = it->second;
-      host_pop[this_host].begin_infective(this_slot);
-    }
-    
-    // scheduled infective recovery
-    for (auto it = schedule_infective_recovery[t].begin(); it != schedule_infective_recovery[t].end(); ++it) {
-      int this_host = it->first;
-      int this_slot = it->second;
-      host_pop[this_host].end_infective(this_slot);
-    }
+      // scheduled infective recovery
+      for (auto it = schedule_infective_recovery[t].begin(); it != schedule_infective_recovery[t].end(); ++it) {
+        int this_host = it->first;
+        int this_slot = it->second;
+        host_pop[this_host].end_infective(this_slot);
+      }
+    }  // end of if statement for skipping first timestep
     
     
     //-------- STORE RESULTS --------
     
     // store daily values
-    for (int k=0; k<n_demes; ++k) {
-      daily_values[k][t-1] = {double(Sh[k]), double(Eh[k]), double(Ih[k]), double(Sv[k]), double(Ev[k]), double(Iv[k]), EIR[k]};
+    for (int k = 0; k < n_demes; ++k) {
+      daily_values[k][t] = {double(Sh[k]), double(Eh[k]), double(Ih[k]),
+                            double(Sv[k]), double(Ev[k]), double(Iv[k]),
+                            EIR[k]};
     }
     
     // if one of output times
-    if (t == param_ptr->time_out[index_time_out]) {
+    if ((t + 1) == param_ptr->time_out[index_time_out]) {
       
       // store genotypes and individual-level data
-      for (int i=0; i<H_total; ++i) {
+      for (int i = 0; i < H_total; ++i) {
         if (host_pop[i].n_infected > 0) {
           int this_deme = host_pop[i].deme;
           
           // store bloodstage genotypes
           vector<vector<int>> tmp_mat;
-          for (int j=0; j<param_ptr->max_innoculations; ++j) {
+          for (int j = 0; j < param_ptr->max_innoculations; ++j) {
             if (host_pop[i].innoc_status_asexual[j] == Bloodstage_asexual) {
-              for (int i2=0; i2<int(host_pop[i].haplotypes[j].size()); ++i2) {
+              for (unsigned int i2 = 0; i2 < host_pop[i].haplotypes[j].size(); ++i2) {
                 tmp_mat.push_back(host_pop[i].haplotypes[j][i2]);
               }
             }
