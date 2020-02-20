@@ -297,7 +297,7 @@ void Dispatcher::simulate() {
           } else {
             
             // choose host at random from infectives
-            int rnd2 = sample2(0, host_infective_index[k].size()-1);
+            int rnd2 = sample2(0, host_infective_index[k].size() - 1);
             int this_host = host_infective_index[k][rnd2];
             
             // infect mosquito
@@ -324,14 +324,14 @@ void Dispatcher::simulate() {
         for (int i = 0; i < h_infectious_bite; ++i) {
           
           // choose host at random
-          int rnd1 = sample2(0, H-1);
+          int rnd1 = sample2(0, H - 1);
           int this_host = host_index[k][rnd1];
           
           // determine whether infectious bite is successful
           if (rbernoulli1(host_pop[this_host].get_prob_infection())) {
             
             // infect from random mosquito
-            int rnd2 = sample2(0, Iv[k]-1);
+            int rnd2 = sample2(0, Iv[k] - 1);
             int this_mosq = Iv_index[k][rnd2];
             host_pop[this_host].new_infection(mosq_pop[this_mosq], t);
           }
