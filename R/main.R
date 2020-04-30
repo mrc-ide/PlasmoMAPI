@@ -198,6 +198,8 @@ pm_proj.check_map_loaded <- function(proj) {
 #'   where \eqn{e} is the eccentricity, \eqn{a} is the length of the semi-major
 #'   axis, and \eqn{b} is the length of the semi-minor axis. Eccentricity ranges
 #'   between 0 (perfect circle) and 1 (straight line between foci).
+#' @param assign_type Assignment method to use (1=standard, 2=new method with 
+#'   function for dealing with duplicate ellipses)
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console during the permutation testing procedure.
 #' @param pb_markdown whether to run progress bars in markdown mode, in which
@@ -207,19 +209,17 @@ pm_proj.check_map_loaded <- function(proj) {
 #' @importFrom utils txtProgressBar
 #' @export
 
-assign_map <- function(proj,
-                       eccentricity = 0.9,
-                       report_progress = TRUE,
-                       pb_markdown = FALSE) {
+assign_map <- function(proj, eccentricity = 0.9, assign_type = 1, 
+                       report_progress = TRUE, pb_markdown = FALSE) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   pm_proj.check_map_loaded(proj)
+  assert_in(assign_type,c(1,2))
   assert_single_bounded(eccentricity, inclusive_left = FALSE, inclusive_right = TRUE)
   assert_single_logical(report_progress)
   assert_single_logical(pb_markdown)
-  
   
   # ---------------------------------------------
   # Set up arguments for input into C++
@@ -246,17 +246,19 @@ assign_map <- function(proj,
   
   
   # ---------------------------------------------
-  # Run efficient C++ code
+  # Run efficient C++ code, process results to project
   
-  output_raw <- assign_map_cpp(args, args_functions, args_progress)
-  
-  
-  # ---------------------------------------------
-  # Process and return
-  
-  # add to project
-  proj$map$hex_edges <- output_raw$hex_edges
-  
+  if(assign_type==1){
+    output_raw <- assign_map_cpp(args, args_functions, args_progress)
+    proj$map$hex_edges <- output_raw$hex_edges
+  } else {
+    output_raw <- assign_map2_cpp(args, args_functions, args_progress)
+    proj$map$hex_edges <- output_raw$hex_edges
+    # nhex=length(proj$map$hex_edges)
+    # for(i in 1:nhex){
+    #   proj$map$hex_edges[i][[1]]<-sort(proj$map$hex_edges[i][[1]])
+    # }
+  }
   # return invisibly
   invisible(proj)
 }
