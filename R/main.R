@@ -344,10 +344,10 @@ calc_simple_hex_values <- function(proj){
   hex_values=rep(0,nHexes)
   for(i in 1:nHexes){
     edge_list=proj$map$hex_edges[i][[1]]
-    if(length(edge_list)>0){
-      hex_values[i]=mean(data$pw_data[edge_list])
+    if(is.na(edge_list[1])==FALSE){
+      hex_values[i]=mean(proj$data$stat_dist[edge_list])
     } else {
-      hex_values[i]=0
+      hex_values[i]=NA
     }
   }
   proj$output$hex_values2=hex_values
