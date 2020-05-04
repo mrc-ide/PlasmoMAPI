@@ -327,6 +327,36 @@ pm_proj.check_data_loaded <- function(proj) {
 }
 
 #------------------------------------------------
+#' @title Calculate map hex values without permutation
+#' 
+#' @description TODO
+#' 
+#' @param proj object of class \code{pm_project}.
+
+calc_simple_hex_values <- function(proj){
+  
+  assert_custom_class(proj, "pm_project")
+  pm_proj.check_coords_loaded(proj)
+  pm_proj.check_map_assigned(proj)
+  pm_proj.check_data_loaded(proj)
+  
+  nHexes=length(proj$map$hex_edges)
+  hex_values=rep(0,nHexes)
+  for(i in 1:nHexes){
+    edge_list=proj$map$hex_edges[i][[1]]
+    if(length(edge_list)>0){
+      hex_values[i]=mean(data$pw_data[edge_list])
+    } else {
+      hex_values[i]=0
+    }
+  }
+  proj$output$hex_values2=hex_values
+  
+  invisible(proj)
+  
+}
+
+#------------------------------------------------
 #' @title Perform PlasmoMAPI analysis
 #'
 #' @description TODO.

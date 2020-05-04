@@ -149,6 +149,9 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
 #' @param base_plot optional base plot (object of class \code{ggplot}) on which
 #'   this function builds. If \code{NULL} then a simple empty plot is used.
 #' @param poly_list optional list of polygon coordinates that are added to plot.
+#' @param labeled_points optional data frame of labeled points to add to graph
+#' @param plot_data_values whether to plot aggregated data values instead of 
+#'                         z-score, if available
 #' 
 #' @import ggplot2
 #' @importFrom viridisLite magma
@@ -163,7 +166,9 @@ plot_map <- function(proj,
                      empirical_tail = "both",
                      alpha_raw = 0.05,
                      base_plot = NULL,
-                     poly_list = list()) {
+                     poly_list = list(),
+                     labeled_points=NULL,
+                     plot_data_values = FALSE) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
@@ -188,6 +193,12 @@ plot_map <- function(proj,
                 message = "barrier polygons must be closed, i.e. the last node coordinate equals the first")
     }
   }
+  if(is.null(labeled_points)==FALSE){
+    assert_dataframe(labeled_points)
+    assert_vector_numeric(labeled_points$x)
+    assert_vector_numeric(labeled_points$y)
+  }
+  assert_single_logical(plot_data_values)
   
   # determine which aspects can/should be plotted
   if (plot_sampling_points) {
@@ -196,12 +207,22 @@ plot_map <- function(proj,
   if (plot_hex_grid) {
     plot_hex_grid <- !is.null(proj$map$hex)
   }
-  plot_hex_values <- !is.null(proj$output$hex_values)
+  if(plot_data_values){
+    plot_hex_values <- !is.null(proj$output$hex_values2) 
+  } else {
+    plot_hex_values <- !is.null(proj$output$hex_values) 
+  }
   
   # determine plotting values
   if (plot_hex_values) {
     add_legend <- TRUE
-    y <- proj$output$hex_values
+    if(plot_data_values==FALSE){
+      y <- proj$output$hex_values
+      legend_name="z-score"
+    } else {
+      y <- proj$output$hex_values2
+      legend_name="Value"
+    }
   } else {
     add_legend <- FALSE
     y <- rep(0, length(proj$map$hex))
@@ -253,9 +274,17 @@ plot_map <- function(proj,
                                 data = proj$data$coords)
   }
   
+  # add labeled points
+  if (is.null(labeled_points)==FALSE){
+    plot1 <- plot1 + geom_point(aes_(x=~x, y=~y),data=labeled_points,
+                                shape=21, color="black", fill="white", size=1)
+    plot1 <- plot1 + geom_text(aes(x=x, y=y,label=label),data=labeled_points,
+                               color="white",size=3,hjust=0, vjust=0) 
+  }
+  
   # titles and legends
   if (add_legend) {
-    plot1 <- plot1 + scale_fill_gradientn(colours = col_scale, name = "z-score")
+    plot1 <- plot1 + scale_fill_gradientn(colours = col_scale, name = legend_name)
   } else {
     plot1 <- plot1 + scale_fill_gradientn(colours = NA)
     plot1 <- plot1 + guides(fill = FALSE)
