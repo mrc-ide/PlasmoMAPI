@@ -79,7 +79,7 @@ Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List
 // assign edges to hexes based on intersection - alternate version
 Rcpp::List assign_map2_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress) {
 
-  int i, j, node1, node2, node1a, node2a, node_loc1, node_loc2, n_dups1, n_dups2;
+  int i, j, node1, node2, node_loc1, node_loc2, n_dups1, n_dups2;
   double node_long1, node_lat1, hex_long1, hex_lat1, dev;
   
   print("Assigning edges to hexes");
@@ -143,6 +143,8 @@ Rcpp::List assign_map2_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
 
   vector<vector<int>> DuplicateLists(n_node_locs);
   vector<int> nDuplicates(n_node_locs);
+  vector<double> loc_long(n_node_locs);
+  vector<double> loc_lat(n_node_locs);
 
   for(node_loc1 = 0; node_loc1 < n_node_locs; node_loc1++)
   {
@@ -159,22 +161,10 @@ Rcpp::List assign_map2_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
 	    }      
 	  }
       nDuplicates[node_loc1]=DuplicateLists[node_loc1].size();
+      loc_long[node_loc1]=node_long1;
+      loc_lat[node_loc1]=node_lat1;
   }
-
-  /*Rcpp::Rcout << "\nNode duplicate numbers list:";
-  for(node_loc1 = 0; node_loc1 < n_node_locs; node_loc1++){ Rcpp::Rcout << " " << nDuplicates[node_loc1];}
-  Rcpp::Rcout << "\nNode duplicate list:\n";
-  for(node_loc1 = 0; node_loc1 < n_node_locs; node_loc1++)
-  { 
-    Rcpp::Rcout << "\n" << node_loc_list[node_loc1] <<" List";
-    n_dups1=nDuplicates[node_loc1];
-    for(i = 0; i < n_dups1; i++)
-    {
-        Rcpp::Rcout << " " << DuplicateLists[node_loc1][i];
-	}    
-  }
-  R_FlushConsole();*/
-  
+    
   // store list of which edges intersect each hex
   vector<vector<int>> hex_edges(n_hex);
   
@@ -199,28 +189,25 @@ Rcpp::List assign_map2_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
     // loop through node locations
     for (node_loc1 = 0; node_loc1 < (n_node_locs-1); node_loc1++)
     {
-      node1=node_loc_list[node_loc1];
-      node_long1=node_long[node1];
-      node_lat1=node_lat[node1];
+      node_long1=loc_long[node_loc1];
+      node_lat1=loc_lat[node_loc1];
       n_dups1=nDuplicates[node_loc1];
       for (node_loc2 = (node_loc1+1); node_loc2 < n_node_locs; node_loc2++)
       {
-          node2=node_loc_list[node_loc2];
           bool intersects = collision_test_hex_ellipse(hex_long1, hex_lat1, hex_width,
                                                      node_long1, node_lat1,
-                                                     node_long[node2], node_lat[node2],
+                                                     loc_long[node_loc2], loc_lat[node_loc2],
                                                      eccentricity);
           if(intersects)
           {
             n_dups2=nDuplicates[node_loc2];
             for(i = 0; i < n_dups1; i++)
             {
-                node1a=DuplicateLists[node_loc1][i];
+                node1=DuplicateLists[node_loc1][i];
                 for(j = 0; j < n_dups2; j++)
                 {
-                    node2a=DuplicateLists[node_loc2][j];
-                    ellipse=ellipse_list[node1a][node2a];
-                    //if(hex==130){ Rcpp::Rcout << "\n" << node_loc1 << "\t" << node_loc2 << "\t" << node1a << "\t" << node2a << "\t" << ellipse;}
+                    node2=DuplicateLists[node_loc2][j];
+                    ellipse=ellipse_list[node1][node2];
                     hex_edges[hex].push_back(ellipse);
 				}
 			}
@@ -230,7 +217,8 @@ Rcpp::List assign_map2_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
   }
   
   // return list
-  return Rcpp::List::create(Rcpp::Named("hex_edges") = hex_edges);
+  return Rcpp::List::create(Rcpp::Named("hex_edges") = hex_edges, Rcpp::Named("loc_long") = loc_long, Rcpp::Named("loc_lat") = loc_lat,
+                            Rcpp::Named("nDuplicates") = nDuplicates);
 }
 
 //------------------------------------------------

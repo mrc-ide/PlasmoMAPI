@@ -254,6 +254,7 @@ assign_map <- function(proj, eccentricity = 0.9, assign_type = 1,
   } else {
     output_raw <- assign_map2_cpp(args, args_functions, args_progress)
     proj$map$hex_edges <- output_raw$hex_edges
+    proj$map$duplicate_labels <- data.frame(x=output_raw$loc_long,y=output_raw$loc_lat,label=output_raw$nDuplicates)
     # nhex=length(proj$map$hex_edges)
     # for(i in 1:nhex){
     #   proj$map$hex_edges[i][[1]]<-sort(proj$map$hex_edges[i][[1]])
