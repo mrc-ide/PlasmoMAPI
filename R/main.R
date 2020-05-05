@@ -332,6 +332,8 @@ pm_proj.check_data_loaded <- function(proj) {
 #' @description TODO
 #' 
 #' @param proj object of class \code{pm_project}.
+#' 
+#' @export
 
 calc_simple_hex_values <- function(proj){
   
