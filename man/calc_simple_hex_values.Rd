@@ -4,10 +4,13 @@
 \alias{calc_simple_hex_values}
 \title{Calculate map hex values without permutation}
 \usage{
-calc_simple_hex_values(proj)
+calc_simple_hex_values(proj, min_dist = 0, max_dist = Inf)
 }
 \arguments{
 \item{proj}{object of class \code{pm_project}.}
+
+\item{min_dist, max_dist}{minimum and maximum edge lengths to be included in
+the analysis. Anything outside this range is ignored.}
 }
 \description{
 TODO

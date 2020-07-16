@@ -333,22 +333,34 @@ pm_proj.check_data_loaded <- function(proj) {
 #' @description TODO
 #' 
 #' @param proj object of class \code{pm_project}.
+#' @param min_dist,max_dist minimum and maximum edge lengths to be included in
+#'   the analysis. Anything outside this range is ignored.
 #' 
 #' @export
 
-calc_simple_hex_values <- function(proj){
+calc_simple_hex_values <- function(proj, min_dist=0.0,max_dist=Inf){
   
   assert_custom_class(proj, "pm_project")
+  
+  assert_single_pos(min_dist, zero_allowed = TRUE)
+  assert_single_pos(max_dist, zero_allowed = FALSE)
+  assert_gr(max_dist, min_dist)
   pm_proj.check_coords_loaded(proj)
   pm_proj.check_map_assigned(proj)
   pm_proj.check_data_loaded(proj)
+  
+  # Create subset of edges for which distances lie in required range
+  x <- proj$data$spatial_dist
+  y <- proj$data$stat_dist
+  w <- which(x > min_dist & x < max_dist & !is.na(y))
   
   nHexes=length(proj$map$hex_edges)
   hex_values=rep(0,nHexes)
   for(i in 1:nHexes){
     edge_list=proj$map$hex_edges[i][[1]]
     if(is.na(edge_list[1])==FALSE){
-      hex_values[i]=mean(proj$data$stat_dist[edge_list])
+      edge_list2=edge_list[which(edge_list %in% w)]
+      hex_values[i]=mean(proj$data$stat_dist[edge_list2])
     } else {
       hex_values[i]=NA
     }
