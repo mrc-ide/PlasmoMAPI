@@ -204,9 +204,11 @@ plot_map <- function(proj,
   if (plot_sampling_points) {
     plot_sampling_points <- !is.null(proj$data$coords)
   }
+  
   if (plot_hex_grid) {
     plot_hex_grid <- !is.null(proj$map$hex)
   }
+  
   if(plot_data_values){
     plot_hex_values <- !is.null(proj$output$hex_values2) 
   } else {
@@ -276,9 +278,9 @@ plot_map <- function(proj,
   
   # add labeled points
   if (is.null(labeled_points)==FALSE){
-    plot1 <- plot1 + geom_point(aes_(x=~x, y=~y),data=labeled_points,
+    plot1 <- plot1 + geom_point(aes(x=~x, y=~y),data=labeled_points,
                                 shape=21, color="black", fill="white", size=1)
-    plot1 <- plot1 + geom_text(aes(x=x, y=y,label=label),data=labeled_points,
+    plot1 <- plot1 + geom_text(aes(x=~x, y=~y,label=~label),data=labeled_points,
                                color="grey",size=3,hjust=0, vjust=0) 
   }
   
