@@ -91,7 +91,7 @@ public:
             Sampler &sampler_age_stable, Sampler &sampler_age_death, Sampler &sampler_duration_infection,
             Parameters &parameters);
   
-  void death(int &ID, int birth_day);
+  void death(int &ID, int t);
   void new_infection(Mosquito &mosq, int t);
   void denovo_infection();
   void Eh_to_Ih(int this_slot);

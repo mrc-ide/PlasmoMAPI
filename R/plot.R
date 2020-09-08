@@ -434,7 +434,7 @@ plot_daily_states <- function(x, deme = 1, states = c("S", "E", "I")) {
   df_wide <- x$daily_values[[deme]][, c("time", states), drop = FALSE]
   
   # get to long format
-  df_long <- tidyr::gather(df_wide, states, factor_key = TRUE)
+  df_long <- tidyr::gather(df_wide, state, count, states, factor_key = TRUE)
   
   # choose plotting colours
   raw_cols <- daily_cols()

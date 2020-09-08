@@ -52,7 +52,7 @@ void Host::init(int index, int &ID, int deme,
   prob_infection_index = 0;
   
   // draw age from demography distribution
-  int age_years = age_stable_ptr->draw() - 1;
+  int age_years = age_stable_ptr->draw();
   int extra_days = sample2(1, 365);
   int age_days = age_years*365 + extra_days;
   
@@ -82,7 +82,7 @@ void Host::init(int index, int &ID, int deme,
   }
   
   // add death_day to scheduler
-  if (death_day <= max_time) {
+  if (death_day < max_time) {
     (*schedule_death_ptr)[death_day].insert(index);
   }
   
@@ -105,7 +105,7 @@ void Host::init(int index, int &ID, int deme,
 
 //------------------------------------------------
 // death
-void Host::death(int &ID, int birth_day) {
+void Host::death(int &ID, int t) {
   
   // drop from infective list if necessary
   if (n_infective > 0) {
@@ -131,15 +131,15 @@ void Host::death(int &ID, int birth_day) {
   prob_infection_index = 0;
   
   // date of birth
-  this->birth_day = birth_day;
+  this->birth_day = t;
   
   // draw life duration from demography distribution
-  int life_years = age_death_ptr->draw() - 1;
+  int life_years = age_death_ptr->draw();
   int life_days = life_years*365 + sample2(1, 365);
   death_day = birth_day + life_days;
   
   // add new death_day to scheduler
-  if (death_day <= max_time) {
+  if (death_day < max_time) {
     (*schedule_death_ptr)[death_day].insert(index);
   }
   
@@ -204,7 +204,7 @@ void Host::new_infection(Mosquito &mosq, int t) {
     haplotypes[this_slot].emplace_back(mosq.get_product());
   } else {
     double p = 1.0;
-    for (int i=0; i<4; ++i) {
+    for (int i = 0; i < 4; ++i) {
       if (rbernoulli1(p)) {
         haplotypes[this_slot].emplace_back(mosq.get_product());
       } else {
@@ -224,22 +224,22 @@ void Host::new_infection(Mosquito &mosq, int t) {
   int t4 = t + u + g + duration_infection;  // end infective
   
   // schedule move to Ih
-  if (t1 < death_day && t1 <= max_time) {
+  if (t1 < death_day && t1 < max_time) {
     (*schedule_Eh_to_Ih_ptr)[t1].emplace_back(index, this_slot);
   }
   
   // schedule bloodstage recovery
-  if (t2 < death_day && t2 <= max_time) {
+  if (t2 < death_day && t2 < max_time) {
     (*schedule_Ih_to_Sh_ptr)[t2].emplace_back(index, this_slot);
   }
   
   // schedule begin infective
-  if (t3 < death_day && t3 <= max_time) {
+  if (t3 < death_day && t3 < max_time) {
     (*schedule_infective_ptr)[t3].emplace_back(index, this_slot);
   }
   
   // schedule end infective
-  if (t4 < death_day && t4 <= max_time) {
+  if (t4 < death_day && t4 < max_time) {
     (*schedule_infective_recovery_ptr)[t4].emplace_back(index, this_slot);
   }
   
