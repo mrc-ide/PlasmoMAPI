@@ -125,7 +125,7 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
 #------------------------------------------------
 #' @title Plot hex map of PlasmoMAPI output
 #'
-#' @description Plot hex map of PlasmoMAPI output.
+#' @description TODO.
 #'
 #' @param proj object of class \code{pm_project}.
 #' @param col_scale the colour scale to use.
@@ -294,7 +294,11 @@ plot_map <- function(proj,
   
   # titles and legends
   if (add_legend) {
+<<<<<<< HEAD
+    plot1 <- plot1 + scale_fill_gradientn(colours = col_scale, name = legend_name)
+=======
     plot1 <- plot1 + scale_fill_gradientn(colours = col_scale, name = "z-score", limits = zlim)
+>>>>>>> testsim
   } else {
     plot1 <- plot1 + scale_fill_gradientn(colours = NA)
     plot1 <- plot1 + guides(fill = FALSE)
