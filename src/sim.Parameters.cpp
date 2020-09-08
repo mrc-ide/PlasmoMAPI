@@ -33,8 +33,8 @@ Parameters::Parameters(const Rcpp::List &args) {
   
   // get migration list from matrix
   vector<vector<double>> mig_matrix = rcpp_to_matrix_double(args["mig_matrix"]);
-  for (int i=0; i<(n_demes-1); ++i) {
-    for (int j=(i+1); j<n_demes; ++j) {
+  for (int i = 0; i < (n_demes-1); ++i) {
+    for (int j = (i+1); j < n_demes; ++j) {
       if (mig_matrix[i][j] > 0) {
         mig_list.push_back(make_tuple(i, j, mig_matrix[i][j]));
       }

@@ -41,7 +41,7 @@ void Mosquito::new_infection(Host* host_ptr) {
   
   // otherwise copy second haplotype from host
   tmp1 = 0;
-  for (int i=0; i<max_innoculations; ++i) {
+  for (int i = 0; i < max_innoculations; ++i) {
     tmp1 += host_ptr->n_infective_haplotypes[i];
     if (tmp1 >= rnd2) {
       haplotype2 = host_ptr->haplotypes[i][tmp1-rnd2];
@@ -56,10 +56,21 @@ void Mosquito::new_infection(Host* host_ptr) {
 //------------------------------------------------
 // initialise with single random haplotype
 void Mosquito::denovo_infection() {
-  haplotype1 = vector<int>(L);
-  for (int i=0; i<L; ++i) {
-    haplotype1[i] = rbernoulli1(0.5) ? 1 : 0;
+  
+  // two possible methods for denovo creation
+  int method = 2;
+  
+  if (method == 1) {  // coin flip at every locus
+    haplotype1 = vector<int>(L);
+    for (int i = 0; i < L; ++i) {
+      haplotype1[i] = rbernoulli1(0.5) ? 1 : 0;
+    }
+  } else if (method == 2) {  // one coin flip over all loci
+    haplotype1 = vector<int>(L, rbernoulli1(0.5));
+  } else {
+    Rcpp::stop("error in denovo_infection(): method outside range");
   }
+  
   n_haplotypes = 1;
 }
 
@@ -90,7 +101,7 @@ vector<int> Mosquito::get_product() {
     
     // recombination
     products.push_back(haplotype1);
-    for (int i=0; i<L; ++i) {
+    for (int i = 0; i < L; ++i) {
       if (rbernoulli1(0.5)) {
         products[n_products][i] = haplotype2[i];
       }
