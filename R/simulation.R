@@ -51,7 +51,7 @@ sim_falciparum <- function(a = 0.3,
                            v = 10,
                            g = 10,
                            prob_infection = seq(0.1,0.01,-0.01),
-                           duration_infection = dgeom(1:300, 1/50),
+                           duration_infection = dgeom(1:500, 1/200),
                            infectivity = 1,
                            max_innoculations = 5,
                            H = 1000,
@@ -83,10 +83,10 @@ sim_falciparum <- function(a = 0.3,
   assert_pos_int(M, zero_allowed = FALSE)
   assert_same_length(M, seed_infections)
   n_demes <- length(M)
-  assert_symmetric_matrix(mig_matrix)
+  #assert_symmetric_matrix(mig_matrix)
   assert_bounded(mig_matrix)
   assert_dim(mig_matrix, c(n_demes, n_demes))
-  assert_eq(rowSums(mig_matrix), rep(1,n_demes))
+  #assert_eq(rowSums(mig_matrix), rep(1,n_demes))
   assert_single_pos_int(L, zero_allowed = FALSE)
   assert_leq(L, 1000)
   assert_single_bounded(prob_cotransmission)

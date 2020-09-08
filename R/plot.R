@@ -125,7 +125,7 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
 #------------------------------------------------
 #' @title Plot hex map of PlasmoMAPI output
 #'
-#' @description Plot hex map of PlasmoMAPI output.
+#' @description TODO.
 #'
 #' @param proj object of class \code{pm_project}.
 #' @param col_scale the colour scale to use.
@@ -146,6 +146,8 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
 #'   high/low values. This raw value is Bonferroni corrected based on the
 #'   effective number of independent samples, and hence applies to the whole map
 #'   and not just a single hex.
+#' @param zlim the limits of the colour scale. If \code{NULL} then these limits
+#'   are chosen automatically.
 #' @param base_plot optional base plot (object of class \code{ggplot}) on which
 #'   this function builds. If \code{NULL} then a simple empty plot is used.
 #' @param poly_list optional list of polygon coordinates that are added to plot.
@@ -162,6 +164,7 @@ plot_map <- function(proj,
                      plot_significance = TRUE,
                      empirical_tail = "both",
                      alpha_raw = 0.05,
+                     zlim = NULL,
                      base_plot = NULL,
                      poly_list = list()) {
   
@@ -174,6 +177,11 @@ plot_map <- function(proj,
   assert_single_string(empirical_tail)
   assert_in(empirical_tail, c("left", "right", "both"))
   assert_single_bounded(alpha_raw)
+  if (!is.null(zlim)) {
+    assert_vector_numeric(zlim)
+    assert_length(zlim, 2)
+  }
+  
   if (!is.null(base_plot)) {
     assert_custom_class(base_plot, "ggplot")
   }
@@ -255,7 +263,7 @@ plot_map <- function(proj,
   
   # titles and legends
   if (add_legend) {
-    plot1 <- plot1 + scale_fill_gradientn(colours = col_scale, name = "z-score")
+    plot1 <- plot1 + scale_fill_gradientn(colours = col_scale, name = "z-score", limits = zlim)
   } else {
     plot1 <- plot1 + scale_fill_gradientn(colours = NA)
     plot1 <- plot1 + guides(fill = FALSE)

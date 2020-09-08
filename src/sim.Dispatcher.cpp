@@ -156,7 +156,6 @@ void Dispatcher::simulate() {
       
       
       //-------- MIGRATION --------
-  #ifdef FOO
       reshuffle(mig_order);
       for (int i = 0; i < param_ptr->n_mig_list; ++i) {
         
@@ -172,7 +171,7 @@ void Dispatcher::simulate() {
         int deme2 = get<1>(param_ptr->mig_list[mig_order[i]]);
         
         // loop through number of migrants
-        for (int j=0; j<n_migrants; ++j) {
+        for (int j = 0; j < n_migrants; ++j) {
           
           // draw migrant index in both demes
           int rnd1 = sample2(0,H-1);
@@ -226,7 +225,7 @@ void Dispatcher::simulate() {
           
         }
       }  // end migration i loop
-  #endif
+      
       
       // loop through demes
       for (int k = 0; k < n_demes; ++k) {
