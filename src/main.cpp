@@ -74,6 +74,153 @@ Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List
   return Rcpp::List::create(Rcpp::Named("hex_edges") = hex_edges);
 }
 
+
+//------------------------------------------------
+// assign edges to hexes based on intersection - alternate version
+Rcpp::List assign_map2_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress) {
+
+  int i, j, node1, node2, node_loc1, node_loc2, n_dups1, n_dups2;
+  double node_long1, node_lat1, hex_long1, hex_lat1, dev;
+  
+  print("Assigning edges to hexes");
+  
+  // load data and parameters
+  vector<double> node_long = rcpp_to_vector_double(args["node_long"]);    //Longitude of data nodes
+  vector<double> node_lat = rcpp_to_vector_double(args["node_lat"]);      //Latitude of data nodes
+  vector<double> hex_long = rcpp_to_vector_double(args["hex_long"]);      //Longitude of hexes
+  vector<double> hex_lat = rcpp_to_vector_double(args["hex_lat"]);        //Latitude of hexes
+  double hex_width = rcpp_to_double(args["hex_width"]);                   //Width of hexes
+  double eccentricity = rcpp_to_double(args["eccentricity"]);             //Eccentricity of ellipses (see help for details)
+  bool report_progress = rcpp_to_bool(args["report_progress"]);           //Whether to update progress bar
+  bool pb_markdown = rcpp_to_bool(args["pb_markdown"]);                   //Whether to run in markdown-safe mode
+  Rcpp::Function update_progress = args_functions["update_progress"];     //R function for updating progress bar
+  
+  // get basic properties
+  int n_node = node_long.size();
+  int n_hex = hex_long.size();
+
+  // Check through nodes for ones with same locations
+  int n_node_locs = 0;
+  vector<int> flagDuplicate(n_node);
+  vector<int> node_loc_list(n_node);
+  vector<vector<int>> ellipse_list(n_node, vector<int>(n_node));
+  int ellipse = 0;
+  for(node1 = 0; node1 < (n_node-1); node1++)
+  { 
+    flagDuplicate[node1]=0; 
+    for (node2 = (node1+1); node2 < n_node; node2++) 
+    {
+        ellipse++;
+        ellipse_list[node1][node2]=ellipse;
+        ellipse_list[node2][node1]=ellipse;
+	}
+  }
+  
+  flagDuplicate[n_node-1]=0;
+
+  for (node1 = 0; node1 < (n_node-1); node1++) 
+  {
+    if(flagDuplicate[node1]==0)
+    {
+        node_loc_list[n_node_locs]=node1;
+        node_long1=node_long[node1];
+        node_lat1=node_lat[node1];
+        for (node2 = (node1+1); node2 < n_node; node2++) 
+        {
+            dev=abs(sq(node_long1-node_long[node2])+sq(node_lat1-node_lat[node2]));
+            if(dev==0.0)
+            { // Duplicate found    
+                flagDuplicate[node2]=1;
+	    	}
+	    }    
+        n_node_locs++;
+	}
+  }
+
+  //Rcpp::Rcout << "\nNumber of nodes = " << n_node << "\tNumber of non-duplicate nodes = " << n_node_locs << "\nNode location list:";
+  //for(node1 = 0; node1 < n_node_locs; node1++){ Rcpp::Rcout << " " << node_loc_list[node1];}
+  //R_FlushConsole();
+
+  vector<vector<int>> DuplicateLists(n_node_locs);
+  vector<int> nDuplicates(n_node_locs);
+  vector<double> loc_long(n_node_locs);
+  vector<double> loc_lat(n_node_locs);
+
+  for(node_loc1 = 0; node_loc1 < n_node_locs; node_loc1++)
+  {
+      node1 = node_loc_list[node_loc1];
+      DuplicateLists[node_loc1].push_back(node1);
+      node_long1 = node_long[node1];
+      node_lat1 = node_lat[node1];
+      for(node2 = (node1+1); node2 < n_node; node2++)
+      {
+        dev=abs(sq(node_long1-node_long[node2])+sq(node_lat1-node_lat[node2]));
+        if(dev==0.0)
+        { // Duplicate found  
+            DuplicateLists[node_loc1].push_back(node2);
+	    }      
+	  }
+      nDuplicates[node_loc1]=DuplicateLists[node_loc1].size();
+      loc_long[node_loc1]=node_long1;
+      loc_lat[node_loc1]=node_lat1;
+  }
+    
+  // store list of which edges intersect each hex
+  vector<vector<int>> hex_edges(n_hex);
+  
+  // loop through hexes
+  for (int hex = 0; hex < n_hex; ++hex) {
+    
+    // report progress
+    if (report_progress) {
+      if ((hex+1) == n_hex) {
+        update_progress(args_progress, "pb", hex+1, n_hex);
+      } else {
+        int remainder = hex % int(ceil(double(n_hex)/100));
+        if (remainder == 0 && !pb_markdown) {
+          update_progress(args_progress, "pb", hex+1, n_hex);
+        }
+      }
+    }
+
+    hex_long1=hex_long[hex];
+    hex_lat1=hex_lat[hex];    
+
+    // loop through node locations
+    for (node_loc1 = 0; node_loc1 < (n_node_locs-1); node_loc1++)
+    {
+      node_long1=loc_long[node_loc1];
+      node_lat1=loc_lat[node_loc1];
+      n_dups1=nDuplicates[node_loc1];
+      for (node_loc2 = (node_loc1+1); node_loc2 < n_node_locs; node_loc2++)
+      {
+          bool intersects = collision_test_hex_ellipse(hex_long1, hex_lat1, hex_width,
+                                                     node_long1, node_lat1,
+                                                     loc_long[node_loc2], loc_lat[node_loc2],
+                                                     eccentricity);
+          if(intersects)
+          {
+            n_dups2=nDuplicates[node_loc2];
+            for(i = 0; i < n_dups1; i++)
+            {
+                node1=DuplicateLists[node_loc1][i];
+                for(j = 0; j < n_dups2; j++)
+                {
+                    node2=DuplicateLists[node_loc2][j];
+                    ellipse=ellipse_list[node1][node2];
+                    hex_edges[hex].push_back(ellipse);
+				}
+			}
+		  }          
+	  }
+	}
+  }
+  
+  // return list
+  return Rcpp::List::create(Rcpp::Named("hex_edges") = hex_edges, Rcpp::Named("loc_long") = loc_long, Rcpp::Named("loc_lat") = loc_lat,
+                            Rcpp::Named("nDuplicates") = nDuplicates);
+}
+
 //------------------------------------------------
 // run main analysis
 Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress) {
@@ -103,11 +250,11 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
   
   // size of list elements
   vector<int> perm_list_size(n_breaks);
-  for (unsigned int i = 0; i < n_breaks; ++i) {
+  for (/*unsigned */int i = 0; i < n_breaks; ++i) {
     perm_list_size[i] = perm_list[i].size();
   }
   vector<int> hex_edges_size(n_hex);
-  for (unsigned int i = 0; i < n_hex; ++i) {
+  for (/*unsigned */int i = 0; i < n_hex; ++i) {
     hex_edges_size[i] = hex_edges[i].size();
   }
   
@@ -124,7 +271,7 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
   print("Carrying out permutation test");
   
   // loop through permutations
-  for (unsigned int perm = 0; perm < n_perms; ++perm) {
+  for (/*unsigned */int perm = 0; perm < n_perms; ++perm) {
     
     // report progress
     if (report_progress) {
@@ -139,7 +286,7 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
     }
     
     // resample edge values
-    for (unsigned int i = 0; i < n_edge; ++i) {
+    for (/*unsigned */int i = 0; i < n_edge; ++i) {
       int pg = perm_group[i] - 1;
       int rnd_index = sample2(1, perm_list_size[pg]) - 1;
       edge_values[i] = perm_list[pg][rnd_index];
@@ -147,7 +294,7 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
     
     // recalculate hex values
     fill(hex_values.begin(), hex_values.end(), 0.0);
-    for (unsigned int h = 0; h < n_hex; ++h) {
+    for (/*unsigned */int h = 0; h < n_hex; ++h) {
       
       // skip hexes with no edges
       if (hex_edges_size[h] == 0) {
@@ -155,14 +302,14 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
       }
       
       // recalculate hex value
-      for (unsigned int i = 0; i < hex_edges_size[h]; ++i) {
+      for (/*unsigned */int i = 0; i < hex_edges_size[h]; ++i) {
         hex_values[h] += edge_values[hex_edges[h][i] - 1];
       }
       hex_values[h] /= double(hex_edges_size[h]);
       
       // update running sums
       ret_sum[h] += hex_values[h];
-      for (unsigned int j = 0; j < (h+1); ++j) {
+      for (/*unsigned */int j = 0; j < (h+1); ++j) {
         ret_sum_sq[h][j] += hex_values[j]*hex_values[h];
       }
       

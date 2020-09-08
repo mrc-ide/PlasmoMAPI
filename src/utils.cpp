@@ -34,7 +34,7 @@ bool collision_test_abline_line(double m, double k,
   double x = (beta - k)/(m - alpha);
   
   // if outside range of finite line then return false
-  if (!(x > l1x & x < l2x)) {
+  if (!((x > l1x) && (x < l2x))) {
     return false;
   }
   
@@ -77,7 +77,7 @@ bool collision_test_point_ellipse(double x, double y,
                                   double f1x, double f1y, double f2x, double f2y, double e) {
   
   // deal with limiting values of eccentricity
-  if (e < 0.0 | e > 1.0) {
+  if ((e < 0.0) || (e > 1.0)) {
     Rcpp::stop("error in collision_test_point_ellipse(): e outside range [0,1]");
   }
   if (e == 0.0) {  // infinitely large circle
@@ -110,7 +110,7 @@ bool collision_test_abline_ellipse(double m, double k,
                                    double &h1x, double &h1y, double &h2x, double &h2y) {
   
   // deal with limiting values of eccentricity
-  if (e < 0.0 | e > 1.0) {
+  if ((e < 0.0) || (e > 1.0)) {
     Rcpp::stop("error in abline_intersects_ellipse(): e outside range [0,1]");
   }
   if (e == 0.0) {  // infinitely large circle
@@ -222,10 +222,10 @@ bool collision_test_line_ellipse(double l1x, double l1y, double l2x, double l2y,
   
   // determine whether either of the points of intersection lie between the
   // original coordinates
-  if (h1x > l1x & h1x < l2x) {
+  if ((h1x > l1x) && (h1x < l2x)) {
     return true;
   }
-  if (h2x > l1x & h2x < l2x) {
+  if ((h2x > l1x) && (h2x < l2x)) {
     return true;
   }
   

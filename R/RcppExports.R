@@ -5,6 +5,10 @@ assign_map_cpp <- function(args, args_functions, args_progress) {
     .Call(`_PlasmoMAPI_assign_map_cpp`, args, args_functions, args_progress)
 }
 
+assign_map2_cpp <- function(args, args_functions, args_progress) {
+    .Call(`_PlasmoMAPI_assign_map2_cpp`, args, args_functions, args_progress)
+}
+
 pm_analysis_cpp <- function(args, args_functions, args_progress) {
     .Call(`_PlasmoMAPI_pm_analysis_cpp`, args, args_functions, args_progress)
 }

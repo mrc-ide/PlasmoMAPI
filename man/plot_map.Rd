@@ -14,7 +14,9 @@ plot_map(
   empirical_tail = "both",
   alpha_raw = 0.05,
   base_plot = NULL,
-  poly_list = list()
+  poly_list = list(),
+  labeled_points = NULL,
+  plot_data_values = FALSE
 )
 }
 \arguments{
@@ -49,6 +51,11 @@ and not just a single hex.}
 this function builds. If \code{NULL} then a simple empty plot is used.}
 
 \item{poly_list}{optional list of polygon coordinates that are added to plot.}
+
+\item{labeled_points}{optional data frame of labeled points to add to graph}
+
+\item{plot_data_values}{whether to plot aggregated data values instead of 
+z-score, if available}
 }
 \description{
 Plot hex map of PlasmoMAPI output.

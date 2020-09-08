@@ -17,7 +17,7 @@ BugReports: https://github.com/username/mrc-ide/PlasmoMAPI/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.1
 LinkingTo: 
     Rcpp
 Imports: 
