@@ -388,11 +388,12 @@ calc_simple_hex_values <- function(proj, min_dist=0.0,max_dist=Inf){
 #'   the analysis. Anything outside this range is ignored.
 #' @param min_group_size minimum number of edges within a spatial permutation
 #'   group, otherwise edges within this group are replaced with \code{NA}.
-#' @param aggregate_clusters if \code{TRUE} then observations from the same
-#'   sampling location are aggregated prior to running the analysis. The
-#'   statistical value between locations X and Y becomes the mean of all
-#'   pairwise values sampled at X and Y. If \code{FALSE} then each value is
-#'   considered separately.
+#' @param check_internal if \code{TRUE} then spatial distance is used as
+#'   statistical distance in place of the loaded matrix. This option acts as an
+#'   internal check, because statistical significance should not be seen when
+#'   spatial distance is tested against itself. If you do see areas of
+#'   significance then it is likely you are not using enough \code{n_breaks} to
+#'   account for the trend with distance in the data.
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console during the permutation testing procedure.
 #' @param pb_markdown whether to run progress bars in markdown mode, in which
@@ -406,7 +407,7 @@ pm_analysis <- function(proj,
                         n_perms = 1e3,
                         n_breaks = 50, min_dist = 0, max_dist = Inf,
                         min_group_size = 5,
-                        aggregate_clusters = FALSE,
+                        check_internal = FALSE,
                         report_progress = TRUE,
                         pb_markdown = FALSE) {
   
@@ -425,7 +426,7 @@ pm_analysis <- function(proj,
   assert_gr(max_dist, min_dist)
   assert_single_pos_int(min_group_size)
   assert_greq(min_group_size, 2)
-  assert_single_logical(aggregate_clusters)
+  assert_single_logical(check_internal)
   assert_single_logical(report_progress)
   assert_single_logical(pb_markdown)
   
@@ -437,34 +438,10 @@ pm_analysis <- function(proj,
   
   # convert spatial and statistical values to x and y for convenience
   x <- as.vector(proj$data$spatial_dist)
-  y <- as.vector(proj$data$stat_dist)
-  
-  # aggregate by sampling location if needed
-  if (aggregate_clusters) {
-    
-    # get index of coordinates relative to unique list
-    u <- unique(proj$data$coords)
-    u_match <- mapply(function(i) {
-      which(proj$data$coords$long == u$long[i] & proj$data$coords$lat == u$lat[i])
-    }, 1:nrow(u), SIMPLIFY = TRUE)
-    
-    # aggregate if any duplicates
-    if (any(mapply(length, u_match) > 1)) {
-      
-      # aggregate by u_match
-      nu <- length(u_match)
-      y_raw <- as.matrix(proj$data$stat_dist)
-      y <- unlist(mapply(function(i) {
-        mapply(function(j) {
-          mean(y_raw[u_match[[i]], u_match[[j]]])
-        }, (i+1):nu)
-      }, 1:(nu-1), SIMPLIFY = FALSE))
-      
-      # get corresponding spatial distances
-      w <- mapply(function(x) x[1], u_match)
-      x <- as.vector(as.dist(as.matrix(proj$data$spatial_dist)[w,w]))
-      
-    }
+  if (check_internal) {
+    y <- as.vector(proj$data$spatial_dist)
+  } else {
+    y <- as.vector(proj$data$stat_dist)
   }
   
   # keep track of original index of these values to be used later in subsetting
@@ -492,16 +469,32 @@ pm_analysis <- function(proj,
                              dist_max = cut_breaks[-1],
                              n_edges = mapply(length, y_perm))
   
+  # exit if all bins empty
+  if (all(df_group_num$n_edges == 0)) {
+    stop("not enough values within each spatial bin. Decrease value of n_breaks or min_group_size to continue")
+  }
+  
   # for each group, calculate the mean and sd
   y_perm_mean <- mapply(function(x) ifelse(is.null(x), NA, mean(x)), y_perm)
   y_perm_sd <- mapply(function(x) ifelse(is.null(x), NA, sd(x)), y_perm)
   
   # drop y values that correspond to empty groups
-  empty_groups <- which(mapply(length, y_perm) == 0)
-  w <- which(!(perm_group %in% empty_groups))
-  y <- y[w]
-  perm_group <- perm_group[w]
-  index <- index[w]
+  #empty_groups <- which(df_group_num$n_edges == 0)
+  #if (any(empty_groups)) {
+  #  w <- which(perm_group %in% empty_groups)
+  #  y <- y[-w]
+  #  perm_group <- perm_group[-w]
+  #  index <- index[-w]
+  #}
+  
+  # drop y values in groups that have zero variance
+  bad_groups <- which(is.na(y_perm_sd) | (y_perm_sd == 0))
+  w <- which(perm_group %in% bad_groups)
+  if (any(w)) {
+    y <- y[-w]
+    perm_group <- perm_group[-w]
+    index <- index[-w]
+  }
   
   # use mean and sd to normalise y values
   y_norm <- (y - y_perm_mean[perm_group])/y_perm_sd[perm_group]
@@ -524,7 +517,7 @@ pm_analysis <- function(proj,
   
   # check that no NAs in final y_norm vector
   if (any(is.na(y_norm))) {
-    stop("bug: y_norm still contains NA values")
+    stop("bug: y_norm still contains NA or NaN values")
   }
   
   
@@ -549,6 +542,8 @@ pm_analysis <- function(proj,
                report_progress = report_progress,
                pb_markdown = pb_markdown)
   
+  #return(args)
+  #args <- p2
   
   # ---------------------------------------------
   # Carry out simulations in C++ to generate map data
@@ -567,6 +562,8 @@ pm_analysis <- function(proj,
   
   # use null distribution to convert y_obs into a z-score
   z_score <- (y_obs - null_mean)/sqrt(diag(cov_mat))
+  
+  #return(cov_mat)
   
   # get correlation matrix
   v <- diag(cov_mat)
