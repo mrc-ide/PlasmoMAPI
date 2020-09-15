@@ -432,6 +432,9 @@ overlay_points <- function(myplot, lon, lat, col = "black", size = 2, opacity = 
 
 plot_daily_states <- function(x, deme = 1, states = c("S", "E", "I")) {
   
+  # avoid no visible binding note
+  state <- count <- NULL
+  
   # check inputs
   assert_custom_class(x, "pm_sim")
   assert_leq(deme, length(x$daily_values), message = "deme not found within simulation output")
