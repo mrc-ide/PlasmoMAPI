@@ -471,21 +471,12 @@ pm_analysis <- function(proj,
   
   # exit if all bins empty
   if (all(df_group_num$n_edges == 0)) {
-    stop("not enough values within each spatial bin. Decrease value of n_breaks or min_group_size to continue")
+    stop("not enough values within each spatial bin. Decrease value of n_breaks or min_group_size and try again")
   }
   
   # for each group, calculate the mean and sd
   y_perm_mean <- mapply(function(x) ifelse(is.null(x), NA, mean(x)), y_perm)
   y_perm_sd <- mapply(function(x) ifelse(is.null(x), NA, sd(x)), y_perm)
-  
-  # drop y values that correspond to empty groups
-  #empty_groups <- which(df_group_num$n_edges == 0)
-  #if (any(empty_groups)) {
-  #  w <- which(perm_group %in% empty_groups)
-  #  y <- y[-w]
-  #  perm_group <- perm_group[-w]
-  #  index <- index[-w]
-  #}
   
   # drop y values in groups that have zero variance
   bad_groups <- which(is.na(y_perm_sd) | (y_perm_sd == 0))
@@ -494,6 +485,11 @@ pm_analysis <- function(proj,
     y <- y[-w]
     perm_group <- perm_group[-w]
     index <- index[-w]
+  }
+  
+  # exit if no variance in any bin
+  if (all(is.na(y_perm_sd) | (y_perm_sd == 0))) {
+    stop("no variance in any spatial bin")
   }
   
   # use mean and sd to normalise y values
