@@ -13,6 +13,7 @@ plot_map(
   plot_significance = TRUE,
   empirical_tail = "both",
   alpha_raw = 0.05,
+  zlim = NULL,
   base_plot = NULL,
   poly_list = list(),
   labeled_points = NULL,
@@ -46,6 +47,9 @@ or \code{empirical_tail = "right"}) or a two-sided test
 high/low values. This raw value is Bonferroni corrected based on the
 effective number of independent samples, and hence applies to the whole map
 and not just a single hex.}
+
+\item{zlim}{the limits of the colour scale. If \code{NULL} then these limits
+are chosen automatically.}
 
 \item{base_plot}{optional base plot (object of class \code{ggplot}) on which
 this function builds. If \code{NULL} then a simple empty plot is used.}
