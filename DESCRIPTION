@@ -22,7 +22,6 @@ LinkingTo:
     Rcpp
 Imports: 
     Rcpp,
-    rARPACK,
     sf,
     ggplot2,
     leaflet,
