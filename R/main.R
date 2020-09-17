@@ -399,7 +399,6 @@ calc_simple_hex_values <- function(proj, min_dist=0.0,max_dist=Inf){
 #' @param pb_markdown whether to run progress bars in markdown mode, in which
 #'   case they are updated once at the end to avoid large amounts of output.
 #'
-#' @importFrom rARPACK eigs
 #' @importFrom stats sd
 #' @export
 
@@ -508,7 +507,7 @@ pm_analysis <- function(proj,
   # calculate hex coverage
   hex_coverage <- mapply(length, hex_edges)
   
-  # calculate final "observed" y values
+  # calculate final "observed" y values. There is one value per hex
   y_obs <- mapply(function(x) mean(y_norm[x]), hex_edges)
   
   # check that no NAs in final y_norm vector
@@ -538,8 +537,6 @@ pm_analysis <- function(proj,
                report_progress = report_progress,
                pb_markdown = pb_markdown)
   
-  #return(args)
-  #args <- p2
   
   # ---------------------------------------------
   # Carry out simulations in C++ to generate map data
@@ -559,17 +556,15 @@ pm_analysis <- function(proj,
   # use null distribution to convert y_obs into a z-score
   z_score <- (y_obs - null_mean)/sqrt(diag(cov_mat))
   
-  #return(cov_mat)
-  
   # get correlation matrix
   v <- diag(cov_mat)
   cor_mat <- cov_mat/outer(sqrt(v), sqrt(v))
   
-  # get effective number of independent samples from leading Eigenvalue of
-  # correlation matrix
+  # get effective number of independent samples from Cheverud (2001) method
   w <- which(hex_coverage > 0)
-  n_eff <- Re(rARPACK::eigs(cor_mat[w,w], 1)$values)
-  
+  eg <- eigen(cor_mat[w,w])$values
+  n_raw <- length(w)
+  n_eff <- n_raw - (n_raw - 1)*var(eg) / n_raw
   
   # ---------------------------------------------
   # Save output as list

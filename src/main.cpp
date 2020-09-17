@@ -271,7 +271,7 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
   print("Carrying out permutation test");
   
   // loop through permutations
-  for (/*unsigned */int perm = 0; perm < n_perms; ++perm) {
+  for (int perm = 0; perm < n_perms; ++perm) {
     
     // report progress
     if (report_progress) {
@@ -286,7 +286,7 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
     }
     
     // resample edge values
-    for (/*unsigned */int i = 0; i < n_edge; ++i) {
+    for (int i = 0; i < n_edge; ++i) {
       int pg = perm_group[i] - 1;
       int rnd_index = sample2(1, perm_list_size[pg]) - 1;
       edge_values[i] = perm_list[pg][rnd_index];
@@ -294,7 +294,7 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
     
     // recalculate hex values
     fill(hex_values.begin(), hex_values.end(), 0.0);
-    for (/*unsigned */int h = 0; h < n_hex; ++h) {
+    for (int h = 0; h < n_hex; ++h) {
       
       // skip hexes with no edges
       if (hex_edges_size[h] == 0) {
@@ -302,14 +302,14 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
       }
       
       // recalculate hex value
-      for (/*unsigned */int i = 0; i < hex_edges_size[h]; ++i) {
+      for (int i = 0; i < hex_edges_size[h]; ++i) {
         hex_values[h] += edge_values[hex_edges[h][i] - 1];
       }
       hex_values[h] /= double(hex_edges_size[h]);
       
       // update running sums
       ret_sum[h] += hex_values[h];
-      for (/*unsigned */int j = 0; j < (h+1); ++j) {
+      for (int j = 0; j < (h+1); ++j) {
         ret_sum_sq[h][j] += hex_values[j]*hex_values[h];
       }
       
