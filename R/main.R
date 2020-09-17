@@ -155,7 +155,7 @@ create_map <- function(proj, hex_width = NULL, border_coords = NULL) {
   }
   
   # get convex hull into sf polygon format
-  bounding_poly <- sf::st_sfc(st_polygon(list(as.matrix(border_coords))))
+  bounding_poly <- sf::st_sfc(sf::st_polygon(list(as.matrix(border_coords))))
   
   # make sf hex grid from poly
   hex_polys <- sf::st_make_grid(bounding_poly, cellsize = hex_width, square = FALSE)
@@ -248,17 +248,13 @@ assign_map <- function(proj, eccentricity = 0.9, assign_type = 1,
   # ---------------------------------------------
   # Run efficient C++ code, process results to project
   
-  if(assign_type==1){
+  if (assign_type == 1) {
     output_raw <- assign_map_cpp(args, args_functions, args_progress)
     proj$map$hex_edges <- output_raw$hex_edges
   } else {
     output_raw <- assign_map2_cpp(args, args_functions, args_progress)
     proj$map$hex_edges <- output_raw$hex_edges
     proj$map$duplicate_labels <- data.frame(x=output_raw$loc_long,y=output_raw$loc_lat,label=output_raw$nDuplicates)
-    # nhex=length(proj$map$hex_edges)
-    # for(i in 1:nhex){
-    #   proj$map$hex_edges[i][[1]]<-sort(proj$map$hex_edges[i][[1]])
-    # }
   }
   # return invisibly
   invisible(proj)
@@ -642,53 +638,4 @@ get_significant_hexes <- function(proj,
   return(ret)
 }
 
-#------------------------------------------------
-#' @title Calculate ellipse polygon coordinates from foci and eccentricity
-#'
-#' @description Calculate ellipse polygon coordinates from foci and eccentricity.
-#'
-#' @param f1 x- and y-coordinates of the first focus.
-#' @param f2 x- and y-coordinates of the first focus.
-#' @param ecc eccentricity of the ellipse, defined as half the distance between
-#'   foci divided by the semi-major axis. We can say \eqn{e = sqrt{1 -
-#'   b^2/a^2}}, where \eqn{e} is the eccentricity, \eqn{a} is the length of the
-#'   semi-major axis, and \eqn{b} is the length of the semi-minor axis.
-#'   Eccentricity ranges between 0 (perfect circle) and 1 (straight line between
-#'   foci).
-#' @param n number of points in polygon.
-#'
-#' @export
-
-get_ellipse <- function(f1 = c(-3,-2), f2 = c(3,2), ecc = 0.8, n = 100) {
-  
-  # check inputs
-  assert_vector_numeric(f1)
-  assert_length(f1, 2)
-  assert_vector_numeric(f2)
-  assert_length(f2, 2)
-  assert_single_pos(ecc)
-  assert_bounded(ecc, inclusive_left = FALSE)
-  assert_single_pos_int(n)
-  
-  # define half-distance between foci (c), semi-major axis (a) and semi-minor
-  # axis(b)
-  c <- 0.5*sqrt(sum((f2-f1)^2))
-  a <- c/ecc
-  b <- sqrt(a^2-c^2)
-  
-  # define slope of ellipse (alpha) and angle of points from centre (theta)
-  alpha <- atan2(f2[2]-f1[2], f2[1]-f1[1])
-  theta <- seq(0, 2*pi, l = n+1)
-  
-  # define x and y coordinates
-  x <- (f1[1]+f2[1])/2 + a*cos(theta)*cos(alpha) - b*sin(theta)*sin(alpha)
-  y <- (f1[2]+f2[2])/2 + a*cos(theta)*sin(alpha) + b*sin(theta)*cos(alpha)
-  
-  # ensure ellipse closes perfectly
-  x[n+1] <- x[1]
-  y[n+1] <- y[1]
-  
-  # return as dataframe
-  return(data.frame(x = x, y = y))
-}
 

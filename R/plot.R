@@ -397,6 +397,110 @@ plot_network <- function(proj,
 }
 
 #------------------------------------------------
+#' @title Plot network of nodes and ellipses
+#'
+#' @description Produce a simple plot of nodes connected by all pairwise
+#'   ellipses, where nodes make up the foci of ellipses and colours correspond
+#'   to statistical distances. Edges with \code{NA} values are not plotted.
+#'
+#' @param proj object of class \code{pm_project}.
+#' @param eccentricity eccentricity of ellipses, defined as half the distance
+#'   between foci divided by the semi-major axis. \eqn{e = sqrt{1 - b^2/a^2}},
+#'   where \eqn{e} is the eccentricity, \eqn{a} is the length of the semi-major
+#'   axis, and \eqn{b} is the length of the semi-minor axis. Eccentricity ranges
+#'   between 0 (perfect circle) and 1 (straight line between foci).
+#' @param n number of points that make up each ellipse.
+#' @param alpha the opacity of ellipses.
+#' @param col_scale the colour scale to use.
+#' @param zlim the limits of the colour scale. If \code{NULL} then these limits
+#'   are chosen automatically.
+#' @param node_size the plotted size of nodes.
+#' @param base_plot optional base plot (object of class \code{ggplot}) on which
+#'   this function builds. If \code{NULL} then a simple empty plot is used.
+#' 
+#' @import ggplot2
+#' @export
+
+plot_ellipses <- function(proj,
+                          eccentricity = 0.9,
+                          n = 30,
+                          alpha = 0.4,
+                          col_scale = rev(PlasmoMAPI::col_hotcold()),
+                          zlim = NULL,
+                          node_size = 2,
+                          base_plot = NULL) {
+  
+  # check inputs
+  assert_custom_class(proj, "pm_project")
+  assert_non_null(proj$data$coords, message = "project must have coordinates loaded")
+  assert_single_bounded(eccentricity)
+  assert_single_pos_int(n)
+  assert_greq(n, 5)
+  assert_single_bounded(alpha)
+  if (!is.null(zlim)) {
+    assert_vector_numeric(zlim)
+    assert_length(zlim, 2)
+  }
+  assert_single_pos(node_size)
+  if (!is.null(base_plot)) {
+    assert_custom_class(base_plot, "ggplot")
+  }
+  
+  # produce basic plot
+  if (is.null(base_plot)) {
+    plot1 <- ggplot() + theme_bw() + theme(panel.grid.major = element_blank(),
+                                           panel.grid.minor = element_blank())
+  }
+  
+  # add ellipses
+  coords <- proj$data$coords
+  if (!is.null(proj$data$stat_dist)) {
+    
+    # create dataframe of all possible source and destination nodes (all edges)
+    coords_source <- coords[rep(seq_len(nrow(coords)), each = nrow(coords)),]
+    coords_dest <- do.call(rbind, replicate(nrow(coords), coords, simplify = FALSE))
+    df_edge <- cbind(coords_source, coords_dest)
+    names(df_edge) <- c("long1", "lat1", "long2", "lat2")
+    
+    # add column for statistical distances
+    df_edge$stat <- as.vector(as.matrix(proj$data$stat_dist))
+    
+    # drop edges for which source = destination node
+    df_edge <- df_edge[-seq(1, nrow(df_edge), nrow(coords) + 1),]
+    
+    # drop edges with NA value
+    df_edge <- subset(df_edge, !is.na(stat))
+    
+    # get list of ellipses from source and destination nodes
+    ell_list <- mapply(function(i) {
+      x <- df_edge[i,]
+      el <- get_ellipse(f1 = c(x$long1, x$lat1),
+                        f2 = c(x$long2, x$lat2),
+                        ecc = eccentricity, n = n)
+      cbind(el, ID = i, stat = rnorm(1))
+    }, seq_len(nrow(df_edge)), SIMPLIFY = FALSE)
+    
+    # add ellipses to plot
+    plot1 <- plot1 + geom_polygon(aes(x = x, y = y, fill = stat, group = ID),
+                         alpha = alpha, color = 1,
+                         data = do.call(rbind, ell_list))
+    plot1 <- plot1 + scale_fill_gradientn(colours = col_scale, name = "statistical\ndistance", limits = zlim)
+    
+  }
+  
+  # add nodes
+  plot1 <- plot1 + geom_point(aes_(x = ~long, y = ~lat),
+                              shape = 21, color = "black", fill = "white", size = node_size,
+                              data = proj$data$coords)
+  
+  # titles and legends
+  plot1 <- plot1 + xlab("longitude") + ylab("latitude")
+  
+  # return plot object
+  return(plot1)
+}
+
+#------------------------------------------------
 #' @title Interactive hex map of PlasmoMAPI output
 #'
 #' @description Interactive hex map of PlasmoMAPI output.
