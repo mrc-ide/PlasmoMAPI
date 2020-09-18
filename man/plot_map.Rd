@@ -12,7 +12,7 @@ plot_map(
   min_hex_coverage = 10,
   plot_significance = TRUE,
   empirical_tail = "both",
-  alpha_raw = 0.05,
+  FDR = 0.05,
   zlim = NULL,
   base_plot = NULL,
   poly_list = list(),
@@ -43,10 +43,8 @@ empirical p-values using a one-sided test (\code{empirical_tail = "left"}
 or \code{empirical_tail = "right"}) or a two-sided test
 (\code{empirical_tail = "both"}).}
 
-\item{alpha_raw}{the significance threshold used to determine significantly
-high/low values. This raw value is Bonferroni corrected based on the
-effective number of independent samples, and hence applies to the whole map
-and not just a single hex.}
+\item{FDR}{the false discovery rate, i.e. the probability that a hex
+identified as significant is actually a false positive.}
 
 \item{zlim}{the limits of the colour scale. If \code{NULL} then these limits
 are chosen automatically.}
@@ -56,7 +54,7 @@ this function builds. If \code{NULL} then a simple empty plot is used.}
 
 \item{poly_list}{optional list of polygon coordinates that are added to plot.}
 
-\item{labeled_points}{optional data frame of labeled points to add to graph}
+\item{labeled_points}{optional data frame of labeled points to add to graph.}
 
 \item{plot_data_values}{whether to plot aggregated data values instead of 
 z-score, if available}

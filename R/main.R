@@ -155,7 +155,7 @@ create_map <- function(proj, hex_width = NULL, border_coords = NULL) {
   }
   
   # get convex hull into sf polygon format
-  bounding_poly <- sf::st_sfc(st_polygon(list(as.matrix(border_coords))))
+  bounding_poly <- sf::st_sfc(sf::st_polygon(list(as.matrix(border_coords))))
   
   # make sf hex grid from poly
   hex_polys <- sf::st_make_grid(bounding_poly, cellsize = hex_width, square = FALSE)
@@ -248,17 +248,13 @@ assign_map <- function(proj, eccentricity = 0.9, assign_type = 1,
   # ---------------------------------------------
   # Run efficient C++ code, process results to project
   
-  if(assign_type==1){
+  if (assign_type == 1) {
     output_raw <- assign_map_cpp(args, args_functions, args_progress)
     proj$map$hex_edges <- output_raw$hex_edges
   } else {
     output_raw <- assign_map2_cpp(args, args_functions, args_progress)
     proj$map$hex_edges <- output_raw$hex_edges
     proj$map$duplicate_labels <- data.frame(x=output_raw$loc_long,y=output_raw$loc_lat,label=output_raw$nDuplicates)
-    # nhex=length(proj$map$hex_edges)
-    # for(i in 1:nhex){
-    #   proj$map$hex_edges[i][[1]]<-sort(proj$map$hex_edges[i][[1]])
-    # }
   }
   # return invisibly
   invisible(proj)
@@ -399,7 +395,6 @@ calc_simple_hex_values <- function(proj, min_dist=0.0,max_dist=Inf){
 #' @param pb_markdown whether to run progress bars in markdown mode, in which
 #'   case they are updated once at the end to avoid large amounts of output.
 #'
-#' @importFrom rARPACK eigs
 #' @importFrom stats sd
 #' @export
 
@@ -493,10 +488,7 @@ pm_analysis <- function(proj,
   }
   
   # use mean and sd to normalise y values
-  y_norm <- (y - y_perm_mean[perm_group])/y_perm_sd[perm_group]
-  y_perm_norm <- mapply(function(i) {
-    (y_perm[[i]] - y_perm_mean[i])/y_perm_sd[i]
-    }, 1:n_breaks, SIMPLIFY = FALSE)
+  y_norm <- (y - y_perm_mean[perm_group]) / y_perm_sd[perm_group]
   
   # indices of edges may have changed. Update hex_edges to account for this
   hex_edges <- mapply(function(z) {
@@ -508,7 +500,7 @@ pm_analysis <- function(proj,
   # calculate hex coverage
   hex_coverage <- mapply(length, hex_edges)
   
-  # calculate final "observed" y values
+  # calculate final "observed" y values. There is one value per hex
   y_obs <- mapply(function(x) mean(y_norm[x]), hex_edges)
   
   # check that no NAs in final y_norm vector
@@ -531,15 +523,12 @@ pm_analysis <- function(proj,
   }
   
   # create argument list
-  args <- list(perm_group = perm_group,
-               perm_list = y_perm_norm,
-               hex_edges = hex_edges,
+  args <- list(hex_edges = hex_edges,
                n_perms = n_perms,
+               y_norm = y_norm,
                report_progress = report_progress,
                pb_markdown = pb_markdown)
   
-  #return(args)
-  #args <- p2
   
   # ---------------------------------------------
   # Carry out simulations in C++ to generate map data
@@ -550,25 +539,12 @@ pm_analysis <- function(proj,
   # ---------------------------------------------
   # Process raw output
   
-  # get mean and covariance matrix of null distribution
+  # get mean and variance of null distribution
   null_mean <- output_raw$ret_sum/n_perms
-  ret_sum_sq <- rcpp_to_matrix(output_raw$ret_sum_sq)
-  ret_sum_sq[upper.tri(ret_sum_sq)] <- t(ret_sum_sq)[upper.tri(ret_sum_sq)]
-  cov_mat <- ret_sum_sq/n_perms - outer(null_mean, null_mean)
+  null_var <- (output_raw$ret_sum_sq - output_raw$ret_sum^2/n_perms) / (n_perms - 1)
   
   # use null distribution to convert y_obs into a z-score
-  z_score <- (y_obs - null_mean)/sqrt(diag(cov_mat))
-  
-  #return(cov_mat)
-  
-  # get correlation matrix
-  v <- diag(cov_mat)
-  cor_mat <- cov_mat/outer(sqrt(v), sqrt(v))
-  
-  # get effective number of independent samples from leading Eigenvalue of
-  # correlation matrix
-  w <- which(hex_coverage > 0)
-  n_eff <- Re(rARPACK::eigs(cor_mat[w,w], 1)$values)
+  z_score <- (y_obs - null_mean)/sqrt(null_var)
   
   
   # ---------------------------------------------
@@ -576,8 +552,7 @@ pm_analysis <- function(proj,
   
   proj$output <- list(hex_values = z_score,
                       hex_coverage = hex_coverage,
-                      spatial_group_num = df_group_num,
-                      n_eff = n_eff)
+                      spatial_group_num = df_group_num)
   
   # return invisibly
   invisible(proj)
@@ -594,29 +569,28 @@ pm_proj.check_output_exists <- function(proj) {
 #------------------------------------------------
 #' @title Get significant hexes
 #'
-#' @description Given a completed PlasmoMAPI analysis, return the number of hexes
-#'   that pass a stated significance threshold. Calculation takes account of the
-#'   inherent correlation between hexes through the effective sample size
-#'   calculation.
+#' @description Given a completed PlasmoMAPI analysis, return a list of which
+#'   hexes are significant outliers.
 #'
 #' @param proj object of class \code{pm_project}.
 #' @param empirical_tail whether to calculate empirical p-values using a
 #'   one-sided test (\code{empirical_tail = "left"} or \code{empirical_tail =
 #'   "right"}) or a two-sided test (\code{empirical_tail = "both"}).
-#' @param alpha_raw the significance threshold used to determine significantly
-#'   high/low values. This raw value is Bonferroni corrected based on the
-#'   effective number of independent samples, and hence applies to the whole map
-#'   and not just a single hex.
+#' @param FDR the false discovery rate, i.e. the probability that a hex
+#'   identified as significant is actually a false positive.
 #' @param min_hex_coverage minimum coverage (number of edges assigned to a hex)
 #'   for it to be included in the final result.
 #'
-#' @importFrom stats qnorm
+#' @importFrom stats pnorm
 #' @export
 
 get_significant_hexes <- function(proj,
                                   empirical_tail = "both",
-                                  alpha_raw = 0.05,
+                                  FDR = 0.05,
                                   min_hex_coverage = 10) {
+  
+  # avoid no visible binding note
+  hex_coverage <- NULL
   
   # check project
   assert_custom_class(proj, "pm_project")
@@ -624,76 +598,48 @@ get_significant_hexes <- function(proj,
   
   assert_single_string(empirical_tail)
   assert_in(empirical_tail, c("left", "right", "both"))
-  assert_single_bounded(alpha_raw)
+  assert_single_bounded(FDR)
+  assert_single_pos_int(min_hex_coverage, zero_allowed = TRUE)
   
-  # get Bonferroni-corrected upper and lower thresholds on significant z-score
-  #alpha_new <- 1 - (1 - alpha_raw)^(1/proj$output$n_eff)  # (exact Bonferroni correction)
-  alpha_new <- alpha_raw/proj$output$n_eff  # (approximate Bonferroni correction)
-  p_bounds <- switch (empirical_tail,
-                      "lower" = c(alpha_new, 1.0),
-                      "upper" = c(0, 1.0 - alpha_new),
-                      "both" = c(alpha_new/2, 1.0 - alpha_new/2)
-  )
-  z_thresh <- qnorm(p_bounds)
+  # get results into dataframe
+  df <- data.frame(hex = seq_along(proj$output$hex_values),
+                   hex_values = proj$output$hex_values,
+                   hex_coverage = proj$output$hex_coverage)
   
-  # get which hexes (if any) are significant, and satisfy minimum hex coverage
-  which_lower <- which(proj$output$hex_values < z_thresh[1] & proj$output$hex_coverage >= min_hex_coverage)
-  which_upper <- which(proj$output$hex_values > z_thresh[2] & proj$output$hex_coverage >= min_hex_coverage)
+  # subset based on coverage
+  if (!any(df$hex_coverage >= min_hex_coverage)) {
+    stop("no hexes wth sufficient coverage when calculating significance")
+  }
+  df <- subset(df, hex_coverage >= min_hex_coverage)
+  
+  # calculate p-values
+  if (empirical_tail == "left") {
+    df$p <- pnorm(df$hex_values) 
+  } else if (empirical_tail == "right") {
+    df$p <- pnorm(df$hex_values, lower.tail = FALSE) 
+  } else if (empirical_tail == "both") {
+    df$p <- 2*pnorm(-abs(df$hex_values))
+  }
+  
+  # sort in order of increasing p
+  df <- df[order(df$p),]
+  
+  # Bejamini and Yekutieli (2001) method for identifying significant results
+  # while fixing the false descovery rate
+  df$BY <- FDR * seq_along(df$p) / nrow(df)
+  which_lower <- which_upper <- NULL
+  if (any(df$p <= df$BY)) {
+    
+    w <- which(df$p <= df$BY)
+    which_upper <- df$hex[w][df$hex_values[w] > 0]
+    which_lower <- df$hex[w][df$hex_values[w] <= 0]
+    
+  }
   
   # return list
   ret <- list(which_lower = which_lower,
-              which_upper = which_upper,
-              z_thresh = z_thresh)
+              which_upper = which_upper)
   return(ret)
 }
 
-#------------------------------------------------
-#' @title Calculate ellipse polygon coordinates from foci and eccentricity
-#'
-#' @description Calculate ellipse polygon coordinates from foci and eccentricity.
-#'
-#' @param f1 x- and y-coordinates of the first focus.
-#' @param f2 x- and y-coordinates of the first focus.
-#' @param ecc eccentricity of the ellipse, defined as half the distance between
-#'   foci divided by the semi-major axis. We can say \eqn{e = sqrt{1 -
-#'   b^2/a^2}}, where \eqn{e} is the eccentricity, \eqn{a} is the length of the
-#'   semi-major axis, and \eqn{b} is the length of the semi-minor axis.
-#'   Eccentricity ranges between 0 (perfect circle) and 1 (straight line between
-#'   foci).
-#' @param n number of points in polygon.
-#'
-#' @export
-
-get_ellipse <- function(f1 = c(-3,-2), f2 = c(3,2), ecc = 0.8, n = 100) {
-  
-  # check inputs
-  assert_vector_numeric(f1)
-  assert_length(f1, 2)
-  assert_vector_numeric(f2)
-  assert_length(f2, 2)
-  assert_single_pos(ecc)
-  assert_bounded(ecc, inclusive_left = FALSE)
-  assert_single_pos_int(n)
-  
-  # define half-distance between foci (c), semi-major axis (a) and semi-minor
-  # axis(b)
-  c <- 0.5*sqrt(sum((f2-f1)^2))
-  a <- c/ecc
-  b <- sqrt(a^2-c^2)
-  
-  # define slope of ellipse (alpha) and angle of points from centre (theta)
-  alpha <- atan2(f2[2]-f1[2], f2[1]-f1[1])
-  theta <- seq(0, 2*pi, l = n+1)
-  
-  # define x and y coordinates
-  x <- (f1[1]+f2[1])/2 + a*cos(theta)*cos(alpha) - b*sin(theta)*sin(alpha)
-  y <- (f1[2]+f2[2])/2 + a*cos(theta)*sin(alpha) + b*sin(theta)*cos(alpha)
-  
-  # ensure ellipse closes perfectly
-  x[n+1] <- x[1]
-  y[n+1] <- y[1]
-  
-  # return as dataframe
-  return(data.frame(x = x, y = y))
-}
 

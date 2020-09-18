@@ -27,6 +27,56 @@ print_full <- function(x) {
 }
 
 #------------------------------------------------
+#' @title Calculate ellipse polygon coordinates from foci and eccentricity
+#'
+#' @description Calculate ellipse polygon coordinates from foci and eccentricity.
+#'
+#' @param f1 x- and y-coordinates of the first focus.
+#' @param f2 x- and y-coordinates of the first focus.
+#' @param ecc eccentricity of the ellipse, defined as half the distance between
+#'   foci divided by the semi-major axis. We can say \eqn{e = sqrt{1 -
+#'   b^2/a^2}}, where \eqn{e} is the eccentricity, \eqn{a} is the length of the
+#'   semi-major axis, and \eqn{b} is the length of the semi-minor axis.
+#'   Eccentricity ranges between 0 (perfect circle) and 1 (straight line between
+#'   foci).
+#' @param n number of points in polygon.
+#'
+#' @export
+
+get_ellipse <- function(f1 = c(-3,-2), f2 = c(3,2), ecc = 0.8, n = 100) {
+  
+  # check inputs
+  assert_vector_numeric(f1)
+  assert_length(f1, 2)
+  assert_vector_numeric(f2)
+  assert_length(f2, 2)
+  assert_single_pos(ecc)
+  assert_bounded(ecc, inclusive_left = FALSE)
+  assert_single_pos_int(n)
+  
+  # define half-distance between foci (c), semi-major axis (a) and semi-minor
+  # axis(b)
+  c <- 0.5*sqrt(sum((f2-f1)^2))
+  a <- c/ecc
+  b <- sqrt(a^2-c^2)
+  
+  # define slope of ellipse (alpha) and angle of points from centre (theta)
+  alpha <- atan2(f2[2]-f1[2], f2[1]-f1[1])
+  theta <- seq(0, 2*pi, l = n+1)
+  
+  # define x and y coordinates
+  x <- (f1[1]+f2[1])/2 + a*cos(theta)*cos(alpha) - b*sin(theta)*sin(alpha)
+  y <- (f1[2]+f2[2])/2 + a*cos(theta)*sin(alpha) + b*sin(theta)*cos(alpha)
+  
+  # ensure ellipse closes perfectly
+  x[n+1] <- x[1]
+  y[n+1] <- y[1]
+  
+  # return as dataframe
+  return(data.frame(x = x, y = y))
+}
+
+#------------------------------------------------
 #' @title Get great circle distance between spatial points
 #'
 #' @description Get great circle distance between spatial points, defined by a
@@ -132,9 +182,9 @@ lonlat_to_bearing <- function(origin_lon, origin_lat, dest_lon, dest_lat) {
 #'   provided then this value will be used for all barriers.
 #' @param barrier_method the method by which penalties are applied:
 #'   \itemize{
-#'     \item{bullet 1 compare line, apply penalty on intersection}
-#'     \item{bullet 2 compare line, apply penalty per unit intersection}
-#'     \item{bullet 3 compare ellipse, apply penalty per unit area intersection}
+#'     \item{compare line, apply fixed penalty if line intersects}
+#'     \item{compare line, apply penalty per unit intersection}
+#'     \item{compare ellipse, apply penalty per unit area intersection}
 #'   }
 #' @param max_barrier_range edges that are longer than this distance are
 #'   unaffected by any barriers. Makes it possible to model barriers that only
@@ -228,22 +278,11 @@ get_barrier_intersect <- function(node_long,
         intersect_mat[intersect_mat == TRUE] <- mapply(function(x) {
           sf::st_length(x)
         }, sf::st_intersection(line_sfc, poly_sfc))
-        #print("foo")
-        #return(list(line_sfc = line_sfc,
-        #            poly_sfc = poly_sfc))
-        #print(length(line_sfc))
-        #print(length(intersect_lengths))
-        #intersect_mat[intersect_mat == TRUE] <- intersect_lengths[intersect_mat == TRUE]
       }
     }
     
     # mask out edges that are beyond limit distance
     intersect_mat <- sweep(intersect_mat, 1, distance_mask, "*")
-    #print(length(distance_mask))
-    #print(dim(intersect_mat))
-    #print(sum(intersect_mat))
-    
-    #print(intersect_mat[45,53])
     
     # if comparing ellipse
     if (barrier_method == 3) {
@@ -275,7 +314,6 @@ get_barrier_intersect <- function(node_long,
         sf::st_area(x)
       }, sf::st_intersection(ell_sfc, poly_sfc))
       intersect_mat[intersect_mat == TRUE] <- intersect_areas[intersect_mat == TRUE]
-      
       
     }
     
