@@ -7,7 +7,7 @@
 get_significant_hexes(
   proj,
   empirical_tail = "both",
-  alpha_raw = 0.05,
+  FDR = 0.05,
   min_hex_coverage = 10
 )
 }
@@ -18,17 +18,13 @@ get_significant_hexes(
 one-sided test (\code{empirical_tail = "left"} or \code{empirical_tail =
 "right"}) or a two-sided test (\code{empirical_tail = "both"}).}
 
-\item{alpha_raw}{the significance threshold used to determine significantly
-high/low values. This raw value is Bonferroni corrected based on the
-effective number of independent samples, and hence applies to the whole map
-and not just a single hex.}
+\item{FDR}{the false discovery rate, i.e. the probability that a hex
+identified as significant is actually a false positive.}
 
 \item{min_hex_coverage}{minimum coverage (number of edges assigned to a hex)
 for it to be included in the final result.}
 }
 \description{
-Given a completed PlasmoMAPI analysis, return the number of hexes
-  that pass a stated significance threshold. Calculation takes account of the
-  inherent correlation between hexes through the effective sample size
-  calculation.
+Given a completed PlasmoMAPI analysis, return a list of which
+  hexes are significant outliers.
 }

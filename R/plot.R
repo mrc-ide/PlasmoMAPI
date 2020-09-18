@@ -142,10 +142,8 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
 #'   empirical p-values using a one-sided test (\code{empirical_tail = "left"}
 #'   or \code{empirical_tail = "right"}) or a two-sided test
 #'   (\code{empirical_tail = "both"}).
-#' @param alpha_raw the significance threshold used to determine significantly
-#'   high/low values. This raw value is Bonferroni corrected based on the
-#'   effective number of independent samples, and hence applies to the whole map
-#'   and not just a single hex.
+#' @param FDR the false discovery rate, i.e. the probability that a hex
+#'   identified as significant is actually a false positive.
 #' @param zlim the limits of the colour scale. If \code{NULL} then these limits
 #'   are chosen automatically.
 #' @param base_plot optional base plot (object of class \code{ggplot}) on which
@@ -166,7 +164,7 @@ plot_map <- function(proj,
                      min_hex_coverage = 10,
                      plot_significance = TRUE,
                      empirical_tail = "both",
-                     alpha_raw = 0.05,
+                     FDR = 0.05,
                      zlim = NULL,
                      base_plot = NULL,
                      poly_list = list(),
@@ -181,7 +179,7 @@ plot_map <- function(proj,
   assert_single_logical(plot_significance)
   assert_single_string(empirical_tail)
   assert_in(empirical_tail, c("left", "right", "both"))
-  assert_single_bounded(alpha_raw)
+  assert_single_bounded(FDR)
   if (!is.null(zlim)) {
     assert_vector_numeric(zlim)
     assert_length(zlim, 2)
@@ -258,7 +256,7 @@ plot_map <- function(proj,
     # get significant hexes
     hex_signif <- get_significant_hexes(proj,
                                         empirical_tail = empirical_tail,
-                                        alpha_raw = alpha_raw,
+                                        FDR = FDR,
                                         min_hex_coverage = min_hex_coverage)
     
     # outline low values
@@ -376,8 +374,11 @@ plot_network <- function(proj,
     # drop edges with NA value
     df_edge <- subset(df_edge, !is.na(stat))
     
+    # order edges
+    #df_edge <- df_edge[order(df_edge$stat),]
+    
     # add edges to plot
-    plot1 <- plot1 + geom_segment(aes(x = long1, y = lat1, xend = long2, yend = lat2, color = stat),
+    plot1 <- plot1 + geom_segment(aes_(x = ~long1, y = ~lat1, xend = ~long2, yend = ~lat2, color = ~stat),
                                   size = edge_size,
                                   data = df_edge)
     plot1 <- plot1 + scale_color_gradientn(colours = col_scale, name = "statistical\ndistance", limits = zlim)
@@ -471,17 +472,20 @@ plot_ellipses <- function(proj,
     # drop edges with NA value
     df_edge <- subset(df_edge, !is.na(stat))
     
+    # order edges
+    #df_edge <- df_edge[order(df_edge$stat),]
+    
     # get list of ellipses from source and destination nodes
     ell_list <- mapply(function(i) {
       x <- df_edge[i,]
       el <- get_ellipse(f1 = c(x$long1, x$lat1),
                         f2 = c(x$long2, x$lat2),
                         ecc = eccentricity, n = n)
-      cbind(el, ID = i, stat = rnorm(1))
+      cbind(el, ID = i, stat = x$stat)
     }, seq_len(nrow(df_edge)), SIMPLIFY = FALSE)
     
     # add ellipses to plot
-    plot1 <- plot1 + geom_polygon(aes(x = x, y = y, fill = stat, group = ID),
+    plot1 <- plot1 + geom_polygon(aes_(x = ~x, y = ~y, fill = ~stat, group = ~ID),
                          alpha = alpha, color = 1,
                          data = do.call(rbind, ell_list))
     plot1 <- plot1 + scale_fill_gradientn(colours = col_scale, name = "statistical\ndistance", limits = zlim)

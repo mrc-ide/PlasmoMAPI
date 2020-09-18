@@ -231,39 +231,32 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
 	// ------------------------------------------------------------------------------------------------
 	// Convert Rcpp arguments to native c++ arguments
   
-  vector<int> perm_group = rcpp_to_vector_int(args["perm_group"]);              // The permutation group of each observed edge
-	vector<vector<double>> perm_list = rcpp_to_matrix_double(args["perm_list"]);  // The set of values in each permutation group
 	vector<vector<int>> hex_edges = rcpp_to_matrix_int(args["hex_edges"]);        // The edges that intersect each hex
 	int n_perms = rcpp_to_int(args["n_perms"]);                                   // Number of permutations to run
+	vector<double> y_norm = rcpp_to_vector_double(args["y_norm"]);
 	bool report_progress = rcpp_to_bool(args["report_progress"]);                 // Whether to update progress bar
-	bool pb_markdown = rcpp_to_bool(args["pb_markdown"]);                         //Whether to run in markdown-safe mode
+	bool pb_markdown = rcpp_to_bool(args["pb_markdown"]);                         // Whether to run in markdown-safe mode
 	Rcpp::Function update_progress = args_functions["update_progress"];           // R function for updating progress bar
-  
   
   // ------------------------------------------------------------------------------------------------
   // Derived values
   
-  // numbers of edges and hexes
-  int n_edge = int(perm_group.size());
+  // number of hexes
   int n_hex = int(hex_edges.size());
-  int n_breaks = int(perm_list.size());
+  
+  // edge and hex values
+  vector<double> edge_values = y_norm;
+  vector<double> hex_values(n_hex);
   
   // size of list elements
-  vector<int> perm_list_size(n_breaks);
-  for (/*unsigned */int i = 0; i < n_breaks; ++i) {
-    perm_list_size[i] = perm_list[i].size();
-  }
   vector<int> hex_edges_size(n_hex);
-  for (/*unsigned */int i = 0; i < n_hex; ++i) {
+  for (int i = 0; i < n_hex; ++i) {
     hex_edges_size[i] = hex_edges[i].size();
   }
   
   // objects for storing results
-  vector<double> edge_values(n_edge);
-  vector<double> hex_values(n_hex);
   vector<double> ret_sum(n_hex);
-  vector<vector<double>> ret_sum_sq(n_hex, vector<double>(n_hex));
-  
+  vector<double> ret_sum_sq(n_hex);
   
   // ------------------------------------------------------------------------------------------------
   // Carry out permutation test
@@ -275,22 +268,18 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
     
     // report progress
     if (report_progress) {
-      if ((perm+1) == n_perms) {
-        update_progress(args_progress, "pb", perm+1, n_perms);
+      if ((perm + 1) == n_perms) {
+        update_progress(args_progress, "pb", perm + 1, n_perms);
       } else {
         int remainder = perm % int(ceil(double(n_perms)/100));
         if (remainder == 0 && !pb_markdown) {
-          update_progress(args_progress, "pb", perm+1, n_perms);
+          update_progress(args_progress, "pb", perm + 1, n_perms);
         }
       }
     }
     
     // resample edge values
-    for (int i = 0; i < n_edge; ++i) {
-      int pg = perm_group[i] - 1;
-      int rnd_index = sample2(1, perm_list_size[pg]) - 1;
-      edge_values[i] = perm_list[pg][rnd_index];
-    }
+    reshuffle(edge_values);
     
     // recalculate hex values
     fill(hex_values.begin(), hex_values.end(), 0.0);
@@ -309,9 +298,7 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
       
       // update running sums
       ret_sum[h] += hex_values[h];
-      for (int j = 0; j < (h+1); ++j) {
-        ret_sum_sq[h][j] += hex_values[j]*hex_values[h];
-      }
+      ret_sum_sq[h] += hex_values[h] * hex_values[h];
       
     }
     

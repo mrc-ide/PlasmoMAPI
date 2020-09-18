@@ -488,10 +488,7 @@ pm_analysis <- function(proj,
   }
   
   # use mean and sd to normalise y values
-  y_norm <- (y - y_perm_mean[perm_group])/y_perm_sd[perm_group]
-  y_perm_norm <- mapply(function(i) {
-    (y_perm[[i]] - y_perm_mean[i])/y_perm_sd[i]
-    }, 1:n_breaks, SIMPLIFY = FALSE)
+  y_norm <- (y - y_perm_mean[perm_group]) / y_perm_sd[perm_group]
   
   # indices of edges may have changed. Update hex_edges to account for this
   hex_edges <- mapply(function(z) {
@@ -526,10 +523,9 @@ pm_analysis <- function(proj,
   }
   
   # create argument list
-  args <- list(perm_group = perm_group,
-               perm_list = y_perm_norm,
-               hex_edges = hex_edges,
+  args <- list(hex_edges = hex_edges,
                n_perms = n_perms,
+               y_norm = y_norm,
                report_progress = report_progress,
                pb_markdown = pb_markdown)
   
@@ -543,32 +539,20 @@ pm_analysis <- function(proj,
   # ---------------------------------------------
   # Process raw output
   
-  # get mean and covariance matrix of null distribution
+  # get mean and variance of null distribution
   null_mean <- output_raw$ret_sum/n_perms
-  ret_sum_sq <- rcpp_to_matrix(output_raw$ret_sum_sq)
-  ret_sum_sq[upper.tri(ret_sum_sq)] <- t(ret_sum_sq)[upper.tri(ret_sum_sq)]
-  cov_mat <- ret_sum_sq/n_perms - outer(null_mean, null_mean)
+  null_var <- (output_raw$ret_sum_sq - output_raw$ret_sum^2/n_perms) / (n_perms - 1)
   
   # use null distribution to convert y_obs into a z-score
-  z_score <- (y_obs - null_mean)/sqrt(diag(cov_mat))
+  z_score <- (y_obs - null_mean)/sqrt(null_var)
   
-  # get correlation matrix
-  v <- diag(cov_mat)
-  cor_mat <- cov_mat/outer(sqrt(v), sqrt(v))
-  
-  # get effective number of independent samples from Cheverud (2001) method
-  w <- which(hex_coverage > 0)
-  eg <- eigen(cor_mat[w,w])$values
-  n_raw <- length(w)
-  n_eff <- n_raw - (n_raw - 1)*var(eg) / n_raw
   
   # ---------------------------------------------
   # Save output as list
   
   proj$output <- list(hex_values = z_score,
                       hex_coverage = hex_coverage,
-                      spatial_group_num = df_group_num,
-                      n_eff = n_eff)
+                      spatial_group_num = df_group_num)
   
   # return invisibly
   invisible(proj)
@@ -585,29 +569,28 @@ pm_proj.check_output_exists <- function(proj) {
 #------------------------------------------------
 #' @title Get significant hexes
 #'
-#' @description Given a completed PlasmoMAPI analysis, return the number of hexes
-#'   that pass a stated significance threshold. Calculation takes account of the
-#'   inherent correlation between hexes through the effective sample size
-#'   calculation.
+#' @description Given a completed PlasmoMAPI analysis, return a list of which
+#'   hexes are significant outliers.
 #'
 #' @param proj object of class \code{pm_project}.
 #' @param empirical_tail whether to calculate empirical p-values using a
 #'   one-sided test (\code{empirical_tail = "left"} or \code{empirical_tail =
 #'   "right"}) or a two-sided test (\code{empirical_tail = "both"}).
-#' @param alpha_raw the significance threshold used to determine significantly
-#'   high/low values. This raw value is Bonferroni corrected based on the
-#'   effective number of independent samples, and hence applies to the whole map
-#'   and not just a single hex.
+#' @param FDR the false discovery rate, i.e. the probability that a hex
+#'   identified as significant is actually a false positive.
 #' @param min_hex_coverage minimum coverage (number of edges assigned to a hex)
 #'   for it to be included in the final result.
 #'
-#' @importFrom stats qnorm
+#' @importFrom stats pnorm
 #' @export
 
 get_significant_hexes <- function(proj,
                                   empirical_tail = "both",
-                                  alpha_raw = 0.05,
+                                  FDR = 0.05,
                                   min_hex_coverage = 10) {
+  
+  # avoid no visible binding note
+  hex_coverage <- NULL
   
   # check project
   assert_custom_class(proj, "pm_project")
@@ -615,26 +598,47 @@ get_significant_hexes <- function(proj,
   
   assert_single_string(empirical_tail)
   assert_in(empirical_tail, c("left", "right", "both"))
-  assert_single_bounded(alpha_raw)
+  assert_single_bounded(FDR)
+  assert_single_pos_int(min_hex_coverage, zero_allowed = TRUE)
   
-  # get Bonferroni-corrected upper and lower thresholds on significant z-score
-  #alpha_new <- 1 - (1 - alpha_raw)^(1/proj$output$n_eff)  # (exact Bonferroni correction)
-  alpha_new <- alpha_raw/proj$output$n_eff  # (approximate Bonferroni correction)
-  p_bounds <- switch (empirical_tail,
-                      "lower" = c(alpha_new, 1.0),
-                      "upper" = c(0, 1.0 - alpha_new),
-                      "both" = c(alpha_new/2, 1.0 - alpha_new/2)
-  )
-  z_thresh <- qnorm(p_bounds)
+  # get results into dataframe
+  df <- data.frame(hex = seq_along(proj$output$hex_values),
+                   hex_values = proj$output$hex_values,
+                   hex_coverage = proj$output$hex_coverage)
   
-  # get which hexes (if any) are significant, and satisfy minimum hex coverage
-  which_lower <- which(proj$output$hex_values < z_thresh[1] & proj$output$hex_coverage >= min_hex_coverage)
-  which_upper <- which(proj$output$hex_values > z_thresh[2] & proj$output$hex_coverage >= min_hex_coverage)
+  # subset based on coverage
+  if (!any(df$hex_coverage >= min_hex_coverage)) {
+    stop("no hexes wth sufficient coverage when calculating significance")
+  }
+  df <- subset(df, hex_coverage >= min_hex_coverage)
+  
+  # calculate p-values
+  if (empirical_tail == "left") {
+    df$p <- pnorm(df$hex_values) 
+  } else if (empirical_tail == "right") {
+    df$p <- pnorm(df$hex_values, lower.tail = FALSE) 
+  } else if (empirical_tail == "both") {
+    df$p <- 2*pnorm(-abs(df$hex_values))
+  }
+  
+  # sort in order of increasing p
+  df <- df[order(df$p),]
+  
+  # Bejamini and Yekutieli (2001) method for identifying significant results
+  # while fixing the false descovery rate
+  df$BY <- FDR * seq_along(df$p) / nrow(df)
+  which_lower <- which_upper <- NULL
+  if (any(df$p <= df$BY)) {
+    
+    w <- which(df$p <= df$BY)
+    which_upper <- df$hex[w][df$hex_values[w] > 0]
+    which_lower <- df$hex[w][df$hex_values[w] <= 0]
+    
+  }
   
   # return list
   ret <- list(which_lower = which_lower,
-              which_upper = which_upper,
-              z_thresh = z_thresh)
+              which_upper = which_upper)
   return(ret)
 }
 
