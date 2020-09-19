@@ -627,7 +627,7 @@ get_significant_hexes <- function(proj,
   # Bejamini and Yekutieli (2001) method for identifying significant results
   # while fixing the false descovery rate
   df$BY <- FDR * seq_along(df$p) / nrow(df)
-  which_lower <- which_upper <- NULL
+  which_lower <- which_upper <- integer()
   if (any(df$p <= df$BY)) {
     
     w <- which(df$p <= df$BY)
