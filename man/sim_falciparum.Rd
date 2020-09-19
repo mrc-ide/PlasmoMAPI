@@ -12,7 +12,7 @@ sim_falciparum(
   v = 10,
   g = 10,
   prob_infection = seq(0.1, 0.01, -0.01),
-  duration_infection = dgeom(1:300, 1/50),
+  duration_infection = dgeom(1:500, 1/200),
   infectivity = 1,
   max_innoculations = 5,
   H = 1000,

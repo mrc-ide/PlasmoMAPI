@@ -11,7 +11,7 @@ pm_analysis(
   min_dist = 0,
   max_dist = Inf,
   min_group_size = 5,
-  aggregate_clusters = FALSE,
+  check_internal = FALSE,
   report_progress = TRUE,
   pb_markdown = FALSE
 )
@@ -34,11 +34,12 @@ the analysis. Anything outside this range is ignored.}
 \item{min_group_size}{minimum number of edges within a spatial permutation
 group, otherwise edges within this group are replaced with \code{NA}.}
 
-\item{aggregate_clusters}{if \code{TRUE} then observations from the same
-sampling location are aggregated prior to running the analysis. The
-statistical value between locations X and Y becomes the mean of all
-pairwise values sampled at X and Y. If \code{FALSE} then each value is
-considered separately.}
+\item{check_internal}{if \code{TRUE} then spatial distance is used as
+statistical distance in place of the loaded matrix. This option acts as an
+internal check, because statistical significance should not be seen when
+spatial distance is tested against itself. If you do see areas of
+significance then it is likely you are not using enough \code{n_breaks} to
+account for the trend with distance in the data.}
 
 \item{report_progress}{if \code{TRUE} then a progress bar is printed to the
 console during the permutation testing procedure.}

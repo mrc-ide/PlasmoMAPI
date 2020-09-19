@@ -142,16 +142,14 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
 #'   empirical p-values using a one-sided test (\code{empirical_tail = "left"}
 #'   or \code{empirical_tail = "right"}) or a two-sided test
 #'   (\code{empirical_tail = "both"}).
-#' @param alpha_raw the significance threshold used to determine significantly
-#'   high/low values. This raw value is Bonferroni corrected based on the
-#'   effective number of independent samples, and hence applies to the whole map
-#'   and not just a single hex.
+#' @param FDR the false discovery rate, i.e. the probability that a hex
+#'   identified as significant is actually a false positive.
 #' @param zlim the limits of the colour scale. If \code{NULL} then these limits
 #'   are chosen automatically.
 #' @param base_plot optional base plot (object of class \code{ggplot}) on which
 #'   this function builds. If \code{NULL} then a simple empty plot is used.
 #' @param poly_list optional list of polygon coordinates that are added to plot.
-#' @param labeled_points optional data frame of labeled points to add to graph
+#' @param labeled_points optional data frame of labeled points to add to graph.
 #' @param plot_data_values whether to plot aggregated data values instead of 
 #'                         z-score, if available
 #' 
@@ -166,11 +164,11 @@ plot_map <- function(proj,
                      min_hex_coverage = 10,
                      plot_significance = TRUE,
                      empirical_tail = "both",
-                     alpha_raw = 0.05,
+                     FDR = 0.05,
                      zlim = NULL,
                      base_plot = NULL,
                      poly_list = list(),
-                     labeled_points=NULL,
+                     labeled_points = NULL,
                      plot_data_values = FALSE) {
   
   # check inputs
@@ -181,12 +179,11 @@ plot_map <- function(proj,
   assert_single_logical(plot_significance)
   assert_single_string(empirical_tail)
   assert_in(empirical_tail, c("left", "right", "both"))
-  assert_single_bounded(alpha_raw)
+  assert_single_bounded(FDR)
   if (!is.null(zlim)) {
     assert_vector_numeric(zlim)
     assert_length(zlim, 2)
   }
-  
   if (!is.null(base_plot)) {
     assert_custom_class(base_plot, "ggplot")
   }
@@ -201,7 +198,7 @@ plot_map <- function(proj,
                 message = "barrier polygons must be closed, i.e. the last node coordinate equals the first")
     }
   }
-  if(is.null(labeled_points)==FALSE){
+  if (!is.null(labeled_points)) {
     assert_dataframe(labeled_points)
     assert_vector_numeric(labeled_points$x)
     assert_vector_numeric(labeled_points$y)
@@ -259,7 +256,7 @@ plot_map <- function(proj,
     # get significant hexes
     hex_signif <- get_significant_hexes(proj,
                                         empirical_tail = empirical_tail,
-                                        alpha_raw = alpha_raw,
+                                        FDR = FDR,
                                         min_hex_coverage = min_hex_coverage)
     
     # outline low values
@@ -286,10 +283,10 @@ plot_map <- function(proj,
   
   # add labeled points
   if (is.null(labeled_points)==FALSE){
-    plot1 <- plot1 + geom_point(aes(x=~x, y=~y),data=labeled_points,
-                                shape=21, color="black", fill="white", size=1)
-    plot1 <- plot1 + geom_text(aes(x=~x, y=~y,label=~label),data=labeled_points,
-                               color="grey",size=3,hjust=0, vjust=0) 
+    plot1 <- plot1 + geom_point(aes_(x = ~x, y = ~y), data = labeled_points,
+                                shape = 21, color = "black", fill = "white", size = 1)
+    plot1 <- plot1 + geom_text(aes_(x = ~x, y = ~y,label = ~label), data = labeled_points,
+                               color = "grey", size = 3, hjust = 0, vjust = 0) 
   }
   
   # titles and legends
@@ -309,6 +306,199 @@ plot_map <- function(proj,
                                     data = as.data.frame(poly_list[[i]]))
     }
   }
+  
+  # return plot object
+  return(plot1)
+}
+
+#------------------------------------------------
+#' @title Plot network of nodes and edges
+#'
+#' @description Produce a simple plot of nodes connected by all pairwise edges,
+#'   where edge colours correspond to statistical distances. Edges with
+#'   \code{NA} values are not plotted.
+#'
+#' @param proj object of class \code{pm_project}.
+#' @param col_scale the colour scale to use.
+#' @param zlim the limits of the colour scale. If \code{NULL} then these limits
+#'   are chosen automatically.
+#' @param node_size,edge_size the plotted size of nodes and edges.
+#' @param base_plot optional base plot (object of class \code{ggplot}) on which
+#'   this function builds. If \code{NULL} then a simple empty plot is used.
+#' 
+#' @import ggplot2
+#' @export
+
+plot_network <- function(proj,
+                         col_scale = rev(PlasmoMAPI::col_hotcold()),
+                         zlim = NULL,
+                         node_size = 2,
+                         edge_size = 1,
+                         base_plot = NULL) {
+  
+  # check inputs
+  assert_custom_class(proj, "pm_project")
+  assert_non_null(proj$data$coords, message = "project must have coordinates loaded")
+  if (!is.null(zlim)) {
+    assert_vector_numeric(zlim)
+    assert_length(zlim, 2)
+  }
+  assert_single_pos(node_size)
+  assert_single_pos(edge_size)
+  if (!is.null(base_plot)) {
+    assert_custom_class(base_plot, "ggplot")
+  }
+  
+  # produce basic plot
+  if (is.null(base_plot)) {
+    plot1 <- ggplot() + theme_bw() + theme(panel.grid.major = element_blank(),
+                                           panel.grid.minor = element_blank())
+  }
+  
+  # add edges
+  coords <- proj$data$coords
+  if (!is.null(proj$data$stat_dist)) {
+    
+    # create dataframe of all possible source and destination nodes (all edges)
+    coords_source <- coords[rep(seq_len(nrow(coords)), each = nrow(coords)),]
+    coords_dest <- do.call(rbind, replicate(nrow(coords), coords, simplify = FALSE))
+    df_edge <- cbind(coords_source, coords_dest)
+    names(df_edge) <- c("long1", "lat1", "long2", "lat2")
+    
+    # add column for statistical distances
+    df_edge$stat <- as.vector(as.matrix(proj$data$stat_dist))
+    
+    # drop edges for which source = destination node
+    df_edge <- df_edge[-seq(1, nrow(df_edge), nrow(coords) + 1),]
+    
+    # drop edges with NA value
+    df_edge <- subset(df_edge, !is.na(stat))
+    
+    # order edges
+    #df_edge <- df_edge[order(df_edge$stat),]
+    
+    # add edges to plot
+    plot1 <- plot1 + geom_segment(aes_(x = ~long1, y = ~lat1, xend = ~long2, yend = ~lat2, color = ~stat),
+                                  size = edge_size,
+                                  data = df_edge)
+    plot1 <- plot1 + scale_color_gradientn(colours = col_scale, name = "statistical\ndistance", limits = zlim)
+    
+  }
+  
+  # add nodes
+  plot1 <- plot1 + geom_point(aes_(x = ~long, y = ~lat),
+                              shape = 21, color = "black", fill = "white", size = node_size,
+                              data = proj$data$coords)
+  
+  # titles and legends
+  plot1 <- plot1 + xlab("longitude") + ylab("latitude")
+  
+  # return plot object
+  return(plot1)
+}
+
+#------------------------------------------------
+#' @title Plot network of nodes and ellipses
+#'
+#' @description Produce a simple plot of nodes connected by all pairwise
+#'   ellipses, where nodes make up the foci of ellipses and colours correspond
+#'   to statistical distances. Edges with \code{NA} values are not plotted.
+#'
+#' @param proj object of class \code{pm_project}.
+#' @param eccentricity eccentricity of ellipses, defined as half the distance
+#'   between foci divided by the semi-major axis. \eqn{e = sqrt{1 - b^2/a^2}},
+#'   where \eqn{e} is the eccentricity, \eqn{a} is the length of the semi-major
+#'   axis, and \eqn{b} is the length of the semi-minor axis. Eccentricity ranges
+#'   between 0 (perfect circle) and 1 (straight line between foci).
+#' @param n number of points that make up each ellipse.
+#' @param alpha the opacity of ellipses.
+#' @param col_scale the colour scale to use.
+#' @param zlim the limits of the colour scale. If \code{NULL} then these limits
+#'   are chosen automatically.
+#' @param node_size the plotted size of nodes.
+#' @param base_plot optional base plot (object of class \code{ggplot}) on which
+#'   this function builds. If \code{NULL} then a simple empty plot is used.
+#' 
+#' @import ggplot2
+#' @export
+
+plot_ellipses <- function(proj,
+                          eccentricity = 0.9,
+                          n = 30,
+                          alpha = 0.4,
+                          col_scale = rev(PlasmoMAPI::col_hotcold()),
+                          zlim = NULL,
+                          node_size = 2,
+                          base_plot = NULL) {
+  
+  # check inputs
+  assert_custom_class(proj, "pm_project")
+  assert_non_null(proj$data$coords, message = "project must have coordinates loaded")
+  assert_single_bounded(eccentricity)
+  assert_single_pos_int(n)
+  assert_greq(n, 5)
+  assert_single_bounded(alpha)
+  if (!is.null(zlim)) {
+    assert_vector_numeric(zlim)
+    assert_length(zlim, 2)
+  }
+  assert_single_pos(node_size)
+  if (!is.null(base_plot)) {
+    assert_custom_class(base_plot, "ggplot")
+  }
+  
+  # produce basic plot
+  if (is.null(base_plot)) {
+    plot1 <- ggplot() + theme_bw() + theme(panel.grid.major = element_blank(),
+                                           panel.grid.minor = element_blank())
+  }
+  
+  # add ellipses
+  coords <- proj$data$coords
+  if (!is.null(proj$data$stat_dist)) {
+    
+    # create dataframe of all possible source and destination nodes (all edges)
+    coords_source <- coords[rep(seq_len(nrow(coords)), each = nrow(coords)),]
+    coords_dest <- do.call(rbind, replicate(nrow(coords), coords, simplify = FALSE))
+    df_edge <- cbind(coords_source, coords_dest)
+    names(df_edge) <- c("long1", "lat1", "long2", "lat2")
+    
+    # add column for statistical distances
+    df_edge$stat <- as.vector(as.matrix(proj$data$stat_dist))
+    
+    # drop edges for which source = destination node
+    df_edge <- df_edge[-seq(1, nrow(df_edge), nrow(coords) + 1),]
+    
+    # drop edges with NA value
+    df_edge <- subset(df_edge, !is.na(stat))
+    
+    # order edges
+    #df_edge <- df_edge[order(df_edge$stat),]
+    
+    # get list of ellipses from source and destination nodes
+    ell_list <- mapply(function(i) {
+      x <- df_edge[i,]
+      el <- get_ellipse(f1 = c(x$long1, x$lat1),
+                        f2 = c(x$long2, x$lat2),
+                        ecc = eccentricity, n = n)
+      cbind(el, ID = i, stat = x$stat)
+    }, seq_len(nrow(df_edge)), SIMPLIFY = FALSE)
+    
+    # add ellipses to plot
+    plot1 <- plot1 + geom_polygon(aes_(x = ~x, y = ~y, fill = ~stat, group = ~ID),
+                         alpha = alpha, color = 1,
+                         data = do.call(rbind, ell_list))
+    plot1 <- plot1 + scale_fill_gradientn(colours = col_scale, name = "statistical\ndistance", limits = zlim)
+    
+  }
+  
+  # add nodes
+  plot1 <- plot1 + geom_point(aes_(x = ~long, y = ~lat),
+                              shape = 21, color = "black", fill = "white", size = node_size,
+                              data = proj$data$coords)
+  
+  # titles and legends
+  plot1 <- plot1 + xlab("longitude") + ylab("latitude")
   
   # return plot object
   return(plot1)
@@ -431,6 +621,9 @@ overlay_points <- function(myplot, lon, lat, col = "black", size = 2, opacity = 
 #' @export
 
 plot_daily_states <- function(x, deme = 1, states = c("S", "E", "I")) {
+  
+  # avoid no visible binding note
+  state <- count <- NULL
   
   # check inputs
   assert_custom_class(x, "pm_sim")
