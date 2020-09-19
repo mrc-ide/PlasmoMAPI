@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Load coordinates of sampling locations into PlasmoMAPI project — load_coords • PlasmoMAPI</title>
+<title>Plot network of nodes and edges — plot_network • PlasmoMAPI</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,10 @@
 
 
 
-<meta property="og:title" content="Load coordinates of sampling locations into PlasmoMAPI project — load_coords" />
-<meta property="og:description" content="Given an existing PlasmoMAPI project, load the spatial coordinates of
-  points at which samples were obtained." />
+<meta property="og:title" content="Plot network of nodes and edges — plot_network" />
+<meta property="og:description" content="Produce a simple plot of nodes connected by all pairwise edges,
+  where edge colours correspond to statistical distances. Edges with
+  NA values are not plotted." />
 
 
 
@@ -121,17 +122,25 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Load coordinates of sampling locations into PlasmoMAPI project</h1>
-    <small class="dont-index">Source: <a href='https://github.com/username/mrc-ide/blob/master/R/main.R'><code>R/main.R</code></a></small>
-    <div class="hidden name"><code>load_coords.Rd</code></div>
+    <h1>Plot network of nodes and edges</h1>
+    <small class="dont-index">Source: <a href='https://github.com/username/mrc-ide/blob/master/R/plot.R'><code>R/plot.R</code></a></small>
+    <div class="hidden name"><code>plot_network.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Given an existing PlasmoMAPI project, load the spatial coordinates of
-  points at which samples were obtained.</p>
+    <p>Produce a simple plot of nodes connected by all pairwise edges,
+  where edge colours correspond to statistical distances. Edges with
+  <code>NA</code> values are not plotted.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>load_coords</span>(<span class='no'>proj</span>, <span class='no'>long</span>, <span class='no'>lat</span>, <span class='kw'>check_delete_output</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>plot_network</span>(
+  <span class='no'>proj</span>,
+  <span class='kw'>col_scale</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rev.html'>rev</a></span>(<span class='kw pkg'>PlasmoMAPI</span><span class='kw ns'>::</span><span class='fu'><a href='col_hotcold.html'>col_hotcold</a></span>()),
+  <span class='kw'>zlim</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>node_size</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>edge_size</span> <span class='kw'>=</span> <span class='fl'>1</span>,
+  <span class='kw'>base_plot</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -141,13 +150,22 @@
       <td><p>object of class <code>pm_project</code>.</p></td>
     </tr>
     <tr>
-      <th>long, lat</th>
-      <td><p>vectors of sampling longitudes and latitudes.</p></td>
+      <th>col_scale</th>
+      <td><p>the colour scale to use.</p></td>
     </tr>
     <tr>
-      <th>check_delete_output</th>
-      <td><p>if <code>TRUE</code> (the default) then check before
-overwriting any existing data loaded into a project.</p></td>
+      <th>zlim</th>
+      <td><p>the limits of the colour scale. If <code>NULL</code> then these limits
+are chosen automatically.</p></td>
+    </tr>
+    <tr>
+      <th>node_size, edge_size</th>
+      <td><p>the plotted size of nodes and edges.</p></td>
+    </tr>
+    <tr>
+      <th>base_plot</th>
+      <td><p>optional base plot (object of class <code>ggplot</code>) on which
+this function builds. If <code>NULL</code> then a simple empty plot is used.</p></td>
     </tr>
     </table>
 
