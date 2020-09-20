@@ -150,6 +150,8 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
 #'   this function builds. If \code{NULL} then a simple empty plot is used.
 #' @param poly_list optional list of polygon coordinates that are added to plot.
 #' @param labeled_points optional data frame of labeled points to add to graph.
+#' @param point_size,point_colour,point_fill,point_stroke properties of plotted
+#'   sampling points.
 #' @param plot_data_values whether to plot aggregated data values instead of 
 #'                         z-score, if available
 #' 
@@ -169,7 +171,12 @@ plot_map <- function(proj,
                      base_plot = NULL,
                      poly_list = list(),
                      labeled_points = NULL,
+                     point_size = 1,
+                     point_colour = "white",
+                     point_fill = "black",
+                     point_stroke = 0.2,
                      plot_data_values = FALSE) {
+  
   
   # check inputs
   assert_custom_class(proj, "pm_project")
@@ -203,6 +210,10 @@ plot_map <- function(proj,
     assert_vector_numeric(labeled_points$x)
     assert_vector_numeric(labeled_points$y)
   }
+  assert_single_pos(point_size, zero_allowed = FALSE)
+  assert_single_string(point_colour)
+  assert_single_string(point_fill)
+  assert_single_pos(point_stroke, zero_allowed = FALSE)
   assert_single_logical(plot_data_values)
   
   # determine which aspects can/should be plotted
@@ -243,6 +254,8 @@ plot_map <- function(proj,
   if (is.null(base_plot)) {
     plot1 <- ggplot() + theme_bw() + theme(panel.grid.major = element_blank(),
                                            panel.grid.minor = element_blank())
+  } else {
+    plot1 <- base_plot
   }
   
   # add hexs
@@ -277,8 +290,8 @@ plot_map <- function(proj,
   # add points
   if (plot_sampling_points) {
     plot1 <- plot1 + geom_point(aes_(x = ~long, y = ~lat),
-                                shape = 21, color = "white", fill = "black", size = 1,
-                                data = proj$data$coords)
+                                shape = 21, color = point_colour, fill = point_fill, size = point_size,
+                                stroke = point_stroke, data = proj$data$coords)
   }
   
   # add labeled points
