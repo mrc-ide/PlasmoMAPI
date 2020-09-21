@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Load coordinates of sampling locations into PlasmoMAPI project — load_coords • PlasmoMAPI</title>
+<title>Calculate map hex values without permutation — calc_simple_hex_values • PlasmoMAPI</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,8 @@
 
 
 
-<meta property="og:title" content="Load coordinates of sampling locations into PlasmoMAPI project — load_coords" />
-<meta property="og:description" content="Given an existing PlasmoMAPI project, load the spatial coordinates of
-  points at which samples were obtained." />
+<meta property="og:title" content="Calculate map hex values without permutation — calc_simple_hex_values" />
+<meta property="og:description" content="TODO" />
 
 
 
@@ -121,17 +120,16 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Load coordinates of sampling locations into PlasmoMAPI project</h1>
+    <h1>Calculate map hex values without permutation</h1>
     <small class="dont-index">Source: <a href='https://github.com/username/mrc-ide/blob/master/R/main.R'><code>R/main.R</code></a></small>
-    <div class="hidden name"><code>load_coords.Rd</code></div>
+    <div class="hidden name"><code>calc_simple_hex_values.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Given an existing PlasmoMAPI project, load the spatial coordinates of
-  points at which samples were obtained.</p>
+    <p>TODO</p>
     </div>
 
-    <pre class="usage"><span class='fu'>load_coords</span>(<span class='no'>proj</span>, <span class='no'>long</span>, <span class='no'>lat</span>, <span class='kw'>check_delete_output</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+    <pre class="usage"><span class='fu'>calc_simple_hex_values</span>(<span class='no'>proj</span>, <span class='kw'>min_dist</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>max_dist</span> <span class='kw'>=</span> <span class='fl'>Inf</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -141,13 +139,9 @@
       <td><p>object of class <code>pm_project</code>.</p></td>
     </tr>
     <tr>
-      <th>long, lat</th>
-      <td><p>vectors of sampling longitudes and latitudes.</p></td>
-    </tr>
-    <tr>
-      <th>check_delete_output</th>
-      <td><p>if <code>TRUE</code> (the default) then check before
-overwriting any existing data loaded into a project.</p></td>
+      <th>min_dist, max_dist</th>
+      <td><p>minimum and maximum edge lengths to be included in
+the analysis. Anything outside this range is ignored.</p></td>
     </tr>
     </table>
 

@@ -4,7 +4,7 @@ author: "Bob Verity and Keith Fraser"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{basic_tutorial}
+  %\VignetteIndexEntry{Basic tutorial}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
