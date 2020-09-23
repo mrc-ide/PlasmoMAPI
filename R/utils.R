@@ -181,10 +181,16 @@ lonlat_to_bearing <- function(origin_lon, origin_lat, dest_lon, dest_lat) {
 #' @param barrier_penalty penalty values of each barrier. If a single value is
 #'   provided then this value will be used for all barriers.
 #' @param barrier_method the method by which penalties are applied:
-#'   \itemize{
-#'     \item{compare line, apply fixed penalty if line intersects}
-#'     \item{compare line, apply penalty per unit intersection}
-#'     \item{compare ellipse, apply penalty per unit area intersection}
+#'   \enumerate{
+#'     \item{compare pairwise lines to barriers. If the line intersects then add
+#'     a fixed \code{barrier_penalty} to the spatial distance.}
+#'     \item{compare pairwise lines to barriers. Calculate the intersection of
+#'     the two, multiply this by the \code{barrier_penalty} and add to the
+#'     spatial distance. For example, a \code{barrier_penalty} of 1 would mean
+#'     there is double the "friction" when moving through a barrier.}
+#'     \item{compare pairwise ellipses to barriers. Calculate the intersection
+#'     area of the two, multiply this by the \code{barrier_penalty} and add to
+#'     the spatial distance.}
 #'   }
 #' @param max_barrier_range edges that are longer than this distance are
 #'   unaffected by any barriers. Makes it possible to model barriers that only

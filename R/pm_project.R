@@ -25,7 +25,7 @@ summary.pm_project <- function(object, ...) {
   if (is.null(object$data$coords)) {
     message("no data loaded")
   } else {
-    message(sprintf("n = %s samples", nrow(object$data$coords)))
+    message(sprintf("samples = %s", nrow(object$data$coords)))
   }
   message("")
   
@@ -34,7 +34,8 @@ summary.pm_project <- function(object, ...) {
   if (is.null(object$map)) {
     message("no map generated")
   } else {
-    message(sprintf("h = %s hexagons", length(object$map$hex)))
+    message(sprintf("eccentricity = %s", object$map$eccentricity))
+    message(sprintf("hexagons = %s", length(object$map$hex)))
   }
   message("")
   
@@ -43,7 +44,9 @@ summary.pm_project <- function(object, ...) {
   if (length(object$output) == 0) {
     message("no output")
   } else {
-    message("TODO - some details of output")
+    hex_coverage <- object$output$hex_coverage
+    message(sprintf("coverage (median) = %s", median(hex_coverage, na.rm = TRUE) ))
+    message(sprintf("coverage (range) = %s - %s", min(hex_coverage, na.rm = TRUE), max(hex_coverage, na.rm = TRUE) ))
   }
 }
 

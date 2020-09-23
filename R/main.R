@@ -256,6 +256,8 @@ assign_map <- function(proj, eccentricity = 0.9, assign_type = 1,
     proj$map$hex_edges <- output_raw$hex_edges
     proj$map$duplicate_labels <- data.frame(x=output_raw$loc_long,y=output_raw$loc_lat,label=output_raw$nDuplicates)
   }
+  proj$map$eccentricity = eccentricity
+  
   # return invisibly
   invisible(proj)
 }
@@ -370,7 +372,12 @@ calc_simple_hex_values <- function(proj, min_dist=0.0,max_dist=Inf){
 #------------------------------------------------
 #' @title Perform PlasmoMAPI analysis
 #'
-#' @description TODO.
+#' @description Runs the main PlasmoMAPI analysis. Statistical distances are
+#'   binned by edge lengths and normalised within each bin. Then raw scores are
+#'   calculated for eac hex and compared against their sampling distribution,
+#'   obtained via permutation testing, to arrive at z-scores. A range-limited
+#'   version of this analysis can be specified by setting the minimum and
+#'   maximum allowed distances.
 #'
 #' @param proj object of class \code{pm_project}.
 #' @param n_perms number of permutations in test.
@@ -546,11 +553,32 @@ pm_analysis <- function(proj,
   # use null distribution to convert y_obs into a z-score
   z_score <- (y_obs - null_mean)/sqrt(null_var)
   
+  if (TRUE) {
+  
+  #browser()
+  
+  z <- do.call(rbind, output_raw$ret_all)
+  
+  empirical_p <- colSums(sweep(z, 2, y_obs, "<"))
+  empirical_p <- (empirical_p + 1) / (nrow(z) + 2)
+  z_score2 <- qnorm(empirical_p)
+  
+  #w <- which(hex_coverage == 10)
+  #y <- sweep(z[,w], 2, null_mean[w], "-")
+  #y <- sweep(y, 2, sqrt(null_var[w]), "/")
+  
+  #plot(density(as.vector(y)))
+  #v <- seq(-5, 5, l = 1001)
+  #lines(v, dnorm(v), col = 2)
+  
+  }
   
   # ---------------------------------------------
   # Save output as list
   
   proj$output <- list(hex_values = z_score,
+                      z_score = z_score,
+                      z_score2 = z_score2,
                       hex_coverage = hex_coverage,
                       spatial_group_num = df_group_num)
   
@@ -628,7 +656,7 @@ get_significant_hexes <- function(proj,
   # while fixing the false descovery rate
   df$BY <- FDR * seq_along(df$p) / nrow(df)
   which_lower <- which_upper <- integer()
-  if (any(df$p <= df$BY)) {
+  if (any(df$p <= df$BY, na.rm = TRUE)) {
     
     w <- which(df$p <= df$BY)
     which_upper <- df$hex[w][df$hex_values[w] > 0]

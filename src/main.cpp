@@ -38,6 +38,9 @@ Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List
   // loop through hexes
   for (int hex = 0; hex < n_hex; ++hex) {
     
+    // allow user to exit on escape
+    Rcpp::checkUserInterrupt();
+    
     // report progress
     if (report_progress) {
       if ((hex+1) == n_hex) {
@@ -258,6 +261,8 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
   vector<double> ret_sum(n_hex);
   vector<double> ret_sum_sq(n_hex);
   
+  vector<vector<double>> ret_all(n_perms, vector<double>(n_hex));
+  
   // ------------------------------------------------------------------------------------------------
   // Carry out permutation test
   
@@ -265,6 +270,9 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
   
   // loop through permutations
   for (int perm = 0; perm < n_perms; ++perm) {
+    
+    // allow user to exit on escape
+    Rcpp::checkUserInterrupt();
     
     // report progress
     if (report_progress) {
@@ -300,13 +308,15 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
       ret_sum[h] += hex_values[h];
       ret_sum_sq[h] += hex_values[h] * hex_values[h];
       
+      ret_all[perm][h] = hex_values[h];
     }
     
   }  // end loop over permutations
   
   // return list
   return Rcpp::List::create(Rcpp::Named("ret_sum") = ret_sum,
-                            Rcpp::Named("ret_sum_sq") = ret_sum_sq);
+                            Rcpp::Named("ret_sum_sq") = ret_sum_sq,
+                            Rcpp::Named("ret_all") = ret_all);
 }
 
 //------------------------------------------------
