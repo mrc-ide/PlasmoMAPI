@@ -464,7 +464,7 @@ pm_analysis <- function(proj,
     if (length(ret) >= min_group_size) {
       return(ret)
     }
-  }, 1:n_breaks, SIMPLIFY = FALSE)
+  }, seq_len(n_breaks), SIMPLIFY = FALSE)
   
   # store number of values in each bin
   df_group_num <- data.frame(dist_min = cut_breaks[-(n_breaks+1)],
@@ -494,8 +494,25 @@ pm_analysis <- function(proj,
     stop("no variance in any spatial bin")
   }
   
+  # TODO - remove
+  #y_perm_mean <- rep(0, length(y_perm_mean))
+  #y_perm_sd <- rep(1, length(y_perm_sd))
+  
   # use mean and sd to normalise y values
   y_norm <- (y - y_perm_mean[perm_group]) / y_perm_sd[perm_group]
+  #print(all(y == y_norm))
+  
+  # TODO - remove? Maybe fix false positives problem
+  #tmp <- df_group_num$n_edges[perm_group]
+  #y_norm <- y_norm / sqrt((tmp - 1)/tmp)
+  
+  # apply same normalisation to values in the perm list
+  y_perm_norm <- mapply(function(i) {
+    (y_perm[[i]] - y_perm_mean[i]) / y_perm_sd[i]
+  }, seq_len(n_breaks), SIMPLIFY = FALSE)
+  
+  # TODO - remove
+  #y_norm <- rnorm(length(y_norm))
   
   # indices of edges may have changed. Update hex_edges to account for this
   hex_edges <- mapply(function(z) {
@@ -530,7 +547,9 @@ pm_analysis <- function(proj,
   }
   
   # create argument list
-  args <- list(hex_edges = hex_edges,
+  args <- list(perm_group = perm_group,
+               perm_list = y_perm_norm,
+               hex_edges = hex_edges,
                n_perms = n_perms,
                y_norm = y_norm,
                report_progress = report_progress,
@@ -562,6 +581,9 @@ pm_analysis <- function(proj,
   empirical_p <- colSums(sweep(z, 2, y_obs, "<"))
   empirical_p <- (empirical_p + 1) / (nrow(z) + 2)
   z_score2 <- qnorm(empirical_p)
+  
+  #ks.test(z[,1], "pnorm")$p.value
+  #apply(z, 2, function(x) ks.test(x, "pnorm")$p.value)
   
   #w <- which(hex_coverage == 10)
   #y <- sweep(z[,w], 2, null_mean[w], "-")
