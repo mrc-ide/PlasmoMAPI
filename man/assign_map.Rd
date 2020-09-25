@@ -7,7 +7,6 @@
 assign_map(
   proj,
   eccentricity = 0.9,
-  assign_type = 1,
   report_progress = TRUE,
   pb_markdown = FALSE
 )
@@ -20,9 +19,6 @@ between foci divided by the semi-major axis. \eqn{e = sqrt{1 - b^2/a^2}},
 where \eqn{e} is the eccentricity, \eqn{a} is the length of the semi-major
 axis, and \eqn{b} is the length of the semi-minor axis. Eccentricity ranges
 between 0 (perfect circle) and 1 (straight line between foci).}
-
-\item{assign_type}{Assignment method to use (1=standard, 2=new method with 
-function for dealing with duplicate ellipses)}
 
 \item{report_progress}{if \code{TRUE} then a progress bar is printed to the
 console during the permutation testing procedure.}
