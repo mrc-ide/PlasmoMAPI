@@ -198,8 +198,6 @@ pm_proj.check_map_loaded <- function(proj) {
 #'   where \eqn{e} is the eccentricity, \eqn{a} is the length of the semi-major
 #'   axis, and \eqn{b} is the length of the semi-minor axis. Eccentricity ranges
 #'   between 0 (perfect circle) and 1 (straight line between foci).
-#' @param assign_type Assignment method to use (1=standard, 2=new method with 
-#'   function for dealing with duplicate ellipses)
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console during the permutation testing procedure.
 #' @param pb_markdown whether to run progress bars in markdown mode, in which
@@ -209,14 +207,15 @@ pm_proj.check_map_loaded <- function(proj) {
 #' @importFrom utils txtProgressBar
 #' @export
 
-assign_map <- function(proj, eccentricity = 0.9, assign_type = 1, 
-                       report_progress = TRUE, pb_markdown = FALSE) {
+assign_map <- function(proj,
+                       eccentricity = 0.9, 
+                       report_progress = TRUE,
+                       pb_markdown = FALSE) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   pm_proj.check_map_loaded(proj)
-  assert_in(assign_type,c(1,2))
   assert_single_bounded(eccentricity, inclusive_left = FALSE, inclusive_right = TRUE)
   assert_single_logical(report_progress)
   assert_single_logical(pb_markdown)
@@ -246,16 +245,17 @@ assign_map <- function(proj, eccentricity = 0.9, assign_type = 1,
   
   
   # ---------------------------------------------
-  # Run efficient C++ code, process results to project
+  # Run efficient C++ code
   
-  if (assign_type == 1) {
-    output_raw <- assign_map_cpp(args, args_functions, args_progress)
-    proj$map$hex_edges <- output_raw$hex_edges
-  } else {
-    output_raw <- assign_map2_cpp(args, args_functions, args_progress)
-    proj$map$hex_edges <- output_raw$hex_edges
-    proj$map$duplicate_labels <- data.frame(x=output_raw$loc_long,y=output_raw$loc_lat,label=output_raw$nDuplicates)
-  }
+  output_raw <- assign_map_cpp(args, args_functions, args_progress)
+  
+  
+  # ---------------------------------------------
+  # Process results and save to project
+  
+  proj$map$hex_edges <- output_raw$hex_edges
+  proj$map$eccentricity = eccentricity
+  
   # return invisibly
   invisible(proj)
 }
@@ -324,53 +324,14 @@ pm_proj.check_data_loaded <- function(proj) {
 }
 
 #------------------------------------------------
-#' @title Calculate map hex values without permutation
-#' 
-#' @description TODO
-#' 
-#' @param proj object of class \code{pm_project}.
-#' @param min_dist,max_dist minimum and maximum edge lengths to be included in
-#'   the analysis. Anything outside this range is ignored.
-#' 
-#' @export
-
-calc_simple_hex_values <- function(proj, min_dist=0.0,max_dist=Inf){
-  
-  assert_custom_class(proj, "pm_project")
-  
-  assert_single_pos(min_dist, zero_allowed = TRUE)
-  assert_single_pos(max_dist, zero_allowed = FALSE)
-  assert_gr(max_dist, min_dist)
-  pm_proj.check_coords_loaded(proj)
-  pm_proj.check_map_assigned(proj)
-  pm_proj.check_data_loaded(proj)
-  
-  # Create subset of edges for which distances lie in required range
-  x <- proj$data$spatial_dist
-  y <- proj$data$stat_dist
-  w <- which(x > min_dist & x < max_dist & !is.na(y))
-  
-  nHexes=length(proj$map$hex_edges)
-  hex_values=rep(0,nHexes)
-  for(i in 1:nHexes){
-    edge_list=proj$map$hex_edges[i][[1]]
-    if(is.na(edge_list[1])==FALSE){
-      edge_list2=edge_list[which(edge_list %in% w)]
-      hex_values[i]=mean(proj$data$stat_dist[edge_list2])
-    } else {
-      hex_values[i]=NA
-    }
-  }
-  proj$output$hex_values2=hex_values
-  
-  invisible(proj)
-  
-}
-
-#------------------------------------------------
 #' @title Perform PlasmoMAPI analysis
 #'
-#' @description TODO.
+#' @description Runs the main PlasmoMAPI analysis. Statistical distances are
+#'   binned by edge lengths and normalised within each bin. Then raw scores are
+#'   calculated for eac hex and compared against their sampling distribution,
+#'   obtained via permutation testing, to arrive at z-scores. A range-limited
+#'   version of this analysis can be specified by setting the minimum and
+#'   maximum allowed distances.
 #'
 #' @param proj object of class \code{pm_project}.
 #' @param n_perms number of permutations in test.
@@ -429,7 +390,9 @@ pm_analysis <- function(proj,
   # ---------------------------------------------
   # Pre-process data
   
-  message("Pre-processing");
+  if (report_progress) {
+    message("Pre-processing");
+  }
   
   # convert spatial and statistical values to x and y for convenience
   x <- as.vector(proj$data$spatial_dist)
@@ -457,7 +420,7 @@ pm_analysis <- function(proj,
     if (length(ret) >= min_group_size) {
       return(ret)
     }
-  }, 1:n_breaks, SIMPLIFY = FALSE)
+  }, seq_len(n_breaks), SIMPLIFY = FALSE)
   
   # store number of values in each bin
   df_group_num <- data.frame(dist_min = cut_breaks[-(n_breaks+1)],
@@ -489,6 +452,15 @@ pm_analysis <- function(proj,
   
   # use mean and sd to normalise y values
   y_norm <- (y - y_perm_mean[perm_group]) / y_perm_sd[perm_group]
+  
+  # TODO - remove? Maybe fixes false positives problem
+  #tmp <- df_group_num$n_edges[perm_group]
+  #y_norm <- y_norm / sqrt((tmp - 1)/tmp)
+  
+  # apply same normalisation to values in the perm list
+  y_perm_norm <- mapply(function(i) {
+    (y_perm[[i]] - y_perm_mean[i]) / y_perm_sd[i]
+  }, seq_len(n_breaks), SIMPLIFY = FALSE)
   
   # indices of edges may have changed. Update hex_edges to account for this
   hex_edges <- mapply(function(z) {
@@ -523,7 +495,9 @@ pm_analysis <- function(proj,
   }
   
   # create argument list
-  args <- list(hex_edges = hex_edges,
+  args <- list(perm_group = perm_group,
+               perm_list = y_perm_norm,
+               hex_edges = hex_edges,
                n_perms = n_perms,
                y_norm = y_norm,
                report_progress = report_progress,
@@ -546,11 +520,25 @@ pm_analysis <- function(proj,
   # use null distribution to convert y_obs into a z-score
   z_score <- (y_obs - null_mean)/sqrt(null_var)
   
+  # TODO - delete. Calculating empirical p-values
+  if (TRUE) {
+    
+    #browser()
+    
+    z <- do.call(rbind, output_raw$ret_all)
+    
+    empirical_p <- colSums(sweep(z, 2, y_obs, "<"))
+    empirical_p <- (empirical_p + 1) / (nrow(z) + 2)
+    z_score2 <- qnorm(empirical_p)
+    
+  }
   
   # ---------------------------------------------
   # Save output as list
   
   proj$output <- list(hex_values = z_score,
+                      z_score = z_score,
+                      z_score2 = z_score2,
                       hex_coverage = hex_coverage,
                       spatial_group_num = df_group_num)
   
@@ -628,7 +616,7 @@ get_significant_hexes <- function(proj,
   # while fixing the false descovery rate
   df$BY <- FDR * seq_along(df$p) / nrow(df)
   which_lower <- which_upper <- integer()
-  if (any(df$p <= df$BY)) {
+  if (any(df$p <= df$BY, na.rm = TRUE)) {
     
     w <- which(df$p <= df$BY)
     which_upper <- df$hex[w][df$hex_values[w] > 0]

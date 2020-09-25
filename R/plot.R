@@ -83,7 +83,7 @@ plot_dist <- function(proj, col = "#00000050", overlay_model = TRUE) {
 #' @import ggplot2
 #' @export
 
-plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
+plot_coverage <- function(proj, breaks = c(0, 10, 20, 30, 40, 50, 100, Inf)) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
@@ -96,7 +96,7 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
   
   # bin hex coverage
   hex_coverage <- proj$output$hex_coverage
-  intersect_bin <- cut(hex_coverage, breaks = breaks)
+  intersect_bin <- cut(hex_coverage, breaks = breaks, right = FALSE)
   
   # -------- Map --------
   
@@ -148,12 +148,11 @@ plot_coverage <- function(proj, breaks = c(0,10,20,30,40,50,100,Inf)) {
 #'   are chosen automatically.
 #' @param base_plot optional base plot (object of class \code{ggplot}) on which
 #'   this function builds. If \code{NULL} then a simple empty plot is used.
-#' @param poly_list optional list of polygon coordinates that are added to plot.
+#' @param poly_list,poly_col optional list of polygon coordinates that are added
+#'   to plot, and associated plotting parameters.
 #' @param labeled_points optional data frame of labeled points to add to graph.
 #' @param point_size,point_colour,point_fill,point_stroke properties of plotted
 #'   sampling points.
-#' @param plot_data_values whether to plot aggregated data values instead of 
-#'                         z-score, if available
 #' 
 #' @import ggplot2
 #' @importFrom viridisLite magma
@@ -170,13 +169,12 @@ plot_map <- function(proj,
                      zlim = NULL,
                      base_plot = NULL,
                      poly_list = list(),
+                     poly_col = "white",
                      labeled_points = NULL,
                      point_size = 1,
                      point_colour = "white",
                      point_fill = "black",
-                     point_stroke = 0.2,
-                     plot_data_values = FALSE) {
-  
+                     point_stroke = 0.2) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
@@ -205,6 +203,7 @@ plot_map <- function(proj,
                 message = "barrier polygons must be closed, i.e. the last node coordinate equals the first")
     }
   }
+  assert_single_string(poly_col)
   if (!is.null(labeled_points)) {
     assert_dataframe(labeled_points)
     assert_vector_numeric(labeled_points$x)
@@ -214,33 +213,21 @@ plot_map <- function(proj,
   assert_single_string(point_colour)
   assert_single_string(point_fill)
   assert_single_pos(point_stroke, zero_allowed = FALSE)
-  assert_single_logical(plot_data_values)
   
   # determine which aspects can/should be plotted
   if (plot_sampling_points) {
     plot_sampling_points <- !is.null(proj$data$coords)
   }
-  
   if (plot_hex_grid) {
     plot_hex_grid <- !is.null(proj$map$hex)
   }
-  
-  if(plot_data_values){
-    plot_hex_values <- !is.null(proj$output$hex_values2) 
-  } else {
-    plot_hex_values <- !is.null(proj$output$hex_values) 
-  }
+  plot_hex_values <- !is.null(proj$output$hex_values) 
   
   # determine plotting values
   if (plot_hex_values) {
     add_legend <- TRUE
-    if(plot_data_values==FALSE){
-      y <- proj$output$hex_values
-      legend_name="z-score"
-    } else {
-      y <- proj$output$hex_values2
-      legend_name="Value"
-    }
+    y <- proj$output$hex_values
+    legend_name = "z-score"
   } else {
     add_legend <- FALSE
     y <- rep(0, length(proj$map$hex))
@@ -315,7 +302,7 @@ plot_map <- function(proj,
   if (nb > 0) {
     for (i in 1:nb) {
       plot1 <- plot1 + geom_polygon(aes_(x = ~long, y = ~lat),
-                                    col = "white", fill = NA, linetype = "dashed",
+                                    col = poly_col, fill = NA, linetype = "dashed",
                                     data = as.data.frame(poly_list[[i]]))
     }
   }
@@ -386,9 +373,6 @@ plot_network <- function(proj,
     
     # drop edges with NA value
     df_edge <- subset(df_edge, !is.na(stat))
-    
-    # order edges
-    #df_edge <- df_edge[order(df_edge$stat),]
     
     # add edges to plot
     plot1 <- plot1 + geom_segment(aes_(x = ~long1, y = ~lat1, xend = ~long2, yend = ~lat2, color = ~stat),
@@ -485,9 +469,6 @@ plot_ellipses <- function(proj,
     # drop edges with NA value
     df_edge <- subset(df_edge, !is.na(stat))
     
-    # order edges
-    #df_edge <- df_edge[order(df_edge$stat),]
-    
     # get list of ellipses from source and destination nodes
     ell_list <- mapply(function(i) {
       x <- df_edge[i,]
@@ -538,8 +519,11 @@ plot_ellipses <- function(proj,
 #' @importFrom methods slot
 #' @export
 
-plot_leaflet <- function(proj, fill_opacity = 0.8, legend_opacity = 1,
-                         map_type = 110, col_scale = viridisLite::magma(100)) {
+plot_leaflet <- function(proj,
+                         fill_opacity = 0.8,
+                         legend_opacity = 1,
+                         map_type = 110,
+                         col_scale = viridisLite::magma(100)) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
@@ -549,12 +533,12 @@ plot_leaflet <- function(proj, fill_opacity = 0.8, legend_opacity = 1,
   
   # produce default colours
   add_legend <- TRUE
-  #if ("hex_values" %in% names(proj$output)) {
-  #  x <- proj$output$hex_values
-  #} else {
-  #  add_legend <- FALSE
-  #  x <- rep(0, length(proj$map$hex))
-  #}
+  if ("hex_values" %in% names(proj$output)) {
+    x <- proj$output$hex_values
+  } else {
+    add_legend <- FALSE
+    x <- rep(0, length(proj$map$hex))
+  }
   
   # add colour variable to hex map
   hex_values <- proj$output$hex_values
@@ -633,13 +617,16 @@ overlay_points <- function(myplot, lon, lat, col = "black", size = 2, opacity = 
 #' @import tidyr
 #' @export
 
-plot_daily_states <- function(x, deme = 1, states = c("S", "E", "I")) {
+plot_daily_states <- function(x,
+                              deme = 1,
+                              states = c("S", "E", "I")) {
   
   # avoid no visible binding note
   state <- count <- NULL
   
   # check inputs
   assert_custom_class(x, "pm_sim")
+  assert_single_pos_int(deme, zero_allowed = FALSE)
   assert_leq(deme, length(x$daily_values), message = "deme not found within simulation output")
   assert_vector(states)
   assert_in(states, c("S", "E", "I", "Sv", "Ev", "Iv"))
