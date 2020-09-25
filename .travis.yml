@@ -7,9 +7,6 @@ os:
   - linux
   - osx
 
-# macOS 10.12 version. Hope to fix intermittent Travis Mac failure due to BasicText (https://rb.gy/v6efml)
-osx_image: xcode9.2
-
 addons:
   apt:
     packages:
