@@ -21,8 +21,7 @@ plot_map(
   point_size = 1,
   point_colour = "white",
   point_fill = "black",
-  point_stroke = 0.2,
-  plot_data_values = FALSE
+  point_stroke = 0.2
 )
 }
 \arguments{
@@ -64,9 +63,6 @@ to plot, and associated plotting parameters.}
 
 \item{point_size, point_colour, point_fill, point_stroke}{properties of plotted
 sampling points.}
-
-\item{plot_data_values}{whether to plot aggregated data values instead of 
-z-score, if available.}
 }
 \description{
 Plot hex map of PlasmoMAPI output.

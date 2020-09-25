@@ -14,11 +14,6 @@
 Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress);
 
 //------------------------------------------------
-// assign edges to hexes based on intersection - alternate
-// [[Rcpp::export]]
-Rcpp::List assign_map2_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress);
-
-//------------------------------------------------
 // run main analysis
 // [[Rcpp::export]]
 Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress);

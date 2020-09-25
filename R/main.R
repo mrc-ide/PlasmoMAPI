@@ -198,8 +198,6 @@ pm_proj.check_map_loaded <- function(proj) {
 #'   where \eqn{e} is the eccentricity, \eqn{a} is the length of the semi-major
 #'   axis, and \eqn{b} is the length of the semi-minor axis. Eccentricity ranges
 #'   between 0 (perfect circle) and 1 (straight line between foci).
-#' @param assign_type Assignment method to use (1=standard, 2=new method with 
-#'   function for dealing with duplicate ellipses)
 #' @param report_progress if \code{TRUE} then a progress bar is printed to the
 #'   console during the permutation testing procedure.
 #' @param pb_markdown whether to run progress bars in markdown mode, in which
@@ -209,14 +207,15 @@ pm_proj.check_map_loaded <- function(proj) {
 #' @importFrom utils txtProgressBar
 #' @export
 
-assign_map <- function(proj, eccentricity = 0.9, assign_type = 1, 
-                       report_progress = TRUE, pb_markdown = FALSE) {
+assign_map <- function(proj,
+                       eccentricity = 0.9, 
+                       report_progress = TRUE,
+                       pb_markdown = FALSE) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   pm_proj.check_map_loaded(proj)
-  assert_in(assign_type,c(1,2))
   assert_single_bounded(eccentricity, inclusive_left = FALSE, inclusive_right = TRUE)
   assert_single_logical(report_progress)
   assert_single_logical(pb_markdown)
@@ -246,16 +245,15 @@ assign_map <- function(proj, eccentricity = 0.9, assign_type = 1,
   
   
   # ---------------------------------------------
-  # Run efficient C++ code, process results to project
+  # Run efficient C++ code
   
-  if (assign_type == 1) {
-    output_raw <- assign_map_cpp(args, args_functions, args_progress)
-    proj$map$hex_edges <- output_raw$hex_edges
-  } else {
-    output_raw <- assign_map2_cpp(args, args_functions, args_progress)
-    proj$map$hex_edges <- output_raw$hex_edges
-    proj$map$duplicate_labels <- data.frame(x=output_raw$loc_long,y=output_raw$loc_lat,label=output_raw$nDuplicates)
-  }
+  output_raw <- assign_map_cpp(args, args_functions, args_progress)
+  
+  
+  # ---------------------------------------------
+  # Process results and save to project
+  
+  proj$map$hex_edges <- output_raw$hex_edges
   proj$map$eccentricity = eccentricity
   
   # return invisibly
@@ -323,50 +321,6 @@ pm_proj.check_data_loaded <- function(proj) {
   assert_custom_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   assert_non_null(proj$data$stat_dist)
-}
-
-#------------------------------------------------
-#' @title Calculate map hex values without permutation
-#' 
-#' @description TODO
-#' 
-#' @param proj object of class \code{pm_project}.
-#' @param min_dist,max_dist minimum and maximum edge lengths to be included in
-#'   the analysis. Anything outside this range is ignored.
-#' 
-#' @export
-
-calc_simple_hex_values <- function(proj, min_dist=0.0,max_dist=Inf){
-  
-  assert_custom_class(proj, "pm_project")
-  
-  assert_single_pos(min_dist, zero_allowed = TRUE)
-  assert_single_pos(max_dist, zero_allowed = FALSE)
-  assert_gr(max_dist, min_dist)
-  pm_proj.check_coords_loaded(proj)
-  pm_proj.check_map_assigned(proj)
-  pm_proj.check_data_loaded(proj)
-  
-  # Create subset of edges for which distances lie in required range
-  x <- proj$data$spatial_dist
-  y <- proj$data$stat_dist
-  w <- which(x > min_dist & x < max_dist & !is.na(y))
-  
-  nHexes=length(proj$map$hex_edges)
-  hex_values=rep(0,nHexes)
-  for(i in 1:nHexes){
-    edge_list=proj$map$hex_edges[i][[1]]
-    if(is.na(edge_list[1])==FALSE){
-      edge_list2=edge_list[which(edge_list %in% w)]
-      hex_values[i]=mean(proj$data$stat_dist[edge_list2])
-    } else {
-      hex_values[i]=NA
-    }
-  }
-  proj$output$hex_values2=hex_values
-  
-  invisible(proj)
-  
 }
 
 #------------------------------------------------
@@ -554,7 +508,6 @@ pm_analysis <- function(proj,
   # Carry out simulations in C++ to generate map data
   
   output_raw <- pm_analysis_cpp(args, args_functions, args_progress)
-  
   
   
   # ---------------------------------------------
