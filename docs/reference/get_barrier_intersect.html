@@ -174,11 +174,17 @@ provided then this value will be used for all barriers.</p></td>
     </tr>
     <tr>
       <th>barrier_method</th>
-      <td><p>the method by which penalties are applied:</p><ul>
-<li><p>compare line, apply fixed penalty if line intersects</p></li>
-<li><p>compare line, apply penalty per unit intersection</p></li>
-<li><p>compare ellipse, apply penalty per unit area intersection</p></li>
-</ul></td>
+      <td><p>the method by which penalties are applied:</p><ol>
+<li><p>compare pairwise lines to barriers. If the line intersects then add
+  a fixed <code>barrier_penalty</code> to the spatial distance.</p></li>
+<li><p>compare pairwise lines to barriers. Calculate the intersection of
+  the two, multiply this by the <code>barrier_penalty</code> and add to the
+  spatial distance. For example, a <code>barrier_penalty</code> of 1 would mean
+  there is double the "friction" when moving through a barrier.</p></li>
+<li><p>compare pairwise ellipses to barriers. Calculate the intersection
+  area of the two, multiply this by the <code>barrier_penalty</code> and add to
+  the spatial distance.</p></li>
+</ol></td>
     </tr>
     <tr>
       <th>max_barrier_range</th>

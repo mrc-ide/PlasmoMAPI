@@ -40,8 +40,9 @@
 
 
 <meta property="og:title" content="Load coordinates of sampling locations into PlasmoMAPI project — load_coords" />
-<meta property="og:description" content="Given an existing PlasmoMAPI project, load the spatial coordinates of
-  points at which samples were obtained." />
+<meta property="og:description" content="Given an existing PlasmoMAPI project, load the spatial
+  coordinates of nodes at which samples were obtained. Node locations cannot
+  be directly on top of one another." />
 
 
 
@@ -127,8 +128,9 @@
     </div>
 
     <div class="ref-description">
-    <p>Given an existing PlasmoMAPI project, load the spatial coordinates of
-  points at which samples were obtained.</p>
+    <p>Given an existing PlasmoMAPI project, load the spatial
+  coordinates of nodes at which samples were obtained. Node locations cannot
+  be directly on top of one another.</p>
     </div>
 
     <pre class="usage"><span class='fu'>load_coords</span>(<span class='no'>proj</span>, <span class='no'>long</span>, <span class='no'>lat</span>, <span class='kw'>check_delete_output</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
