@@ -48,5 +48,10 @@ console during the permutation testing procedure.}
 case they are updated once at the end to avoid large amounts of output.}
 }
 \description{
-TODO.
+Runs the main PlasmoMAPI analysis. Statistical distances are
+  binned by edge lengths and normalised within each bin. Then raw scores are
+  calculated for eac hex and compared against their sampling distribution,
+  obtained via permutation testing, to arrive at z-scores. A range-limited
+  version of this analysis can be specified by setting the minimum and
+  maximum allowed distances.
 }

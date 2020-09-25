@@ -301,6 +301,7 @@ Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::Lis
     }
     
     // resample edge values
+    // TODO - remove old resampling methods
     //reshuffle(edge_values);
     
     //for (int i = 0; i < n_edge; ++i) {
