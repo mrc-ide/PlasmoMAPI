@@ -40,7 +40,12 @@
 
 
 <meta property="og:title" content="Perform PlasmoMAPI analysis — pm_analysis" />
-<meta property="og:description" content="TODO." />
+<meta property="og:description" content="Runs the main PlasmoMAPI analysis. Statistical distances are
+  binned by edge lengths and normalised within each bin. Then raw scores are
+  calculated for eac hex and compared against their sampling distribution,
+  obtained via permutation testing, to arrive at z-scores. A range-limited
+  version of this analysis can be specified by setting the minimum and
+  maximum allowed distances." />
 
 
 
@@ -126,7 +131,12 @@
     </div>
 
     <div class="ref-description">
-    <p>TODO.</p>
+    <p>Runs the main PlasmoMAPI analysis. Statistical distances are
+  binned by edge lengths and normalised within each bin. Then raw scores are
+  calculated for eac hex and compared against their sampling distribution,
+  obtained via permutation testing, to arrive at z-scores. A range-limited
+  version of this analysis can be specified by setting the minimum and
+  maximum allowed distances.</p>
     </div>
 
     <pre class="usage"><span class='fu'>pm_analysis</span>(

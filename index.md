@@ -5,7 +5,7 @@
 
 PlasmoMAPI is an R package for converting pairwise spatial data (i.e. statistical values calculated between different sampling locations) into maps that show areas of high or low connectivity*. These maps can be useful for 1) visualising data, as an alternative to simple networks of nodes and edges which get confusing when when the number of nodes is large, and 2) statistical testing, because it can be very difficult to detect subtle patterns when looking at raw data. PlasmoMAPI is a spinoff from the original MAPI method (REF) by Sylvian Piry and co-authors, differing in a number of key assumptions and also being tailored toward analysis of malaria (Plasmodium) data.
 
-<img src="https://raw.githubusercontent.com/mrc-ide/PlasmoMAPI/master/R_ignore/web_images/main_page.pdf" height="500px" width="800px" />
+<img src="https://raw.githubusercontent.com/mrc-ide/PlasmoMAPI/master/R_ignore/web_images/main_page.pdf" height="1000px" width="800px" />
 
 If you'd like to see an example analysis from start to finish, check out the 
 

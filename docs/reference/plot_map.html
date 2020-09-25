@@ -141,12 +141,12 @@
   <span class='kw'>zlim</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>base_plot</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>poly_list</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(),
+  <span class='kw'>poly_col</span> <span class='kw'>=</span> <span class='st'>"white"</span>,
   <span class='kw'>labeled_points</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>point_size</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>point_colour</span> <span class='kw'>=</span> <span class='st'>"white"</span>,
   <span class='kw'>point_fill</span> <span class='kw'>=</span> <span class='st'>"black"</span>,
-  <span class='kw'>point_stroke</span> <span class='kw'>=</span> <span class='fl'>0.2</span>,
-  <span class='kw'>plot_data_values</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+  <span class='kw'>point_stroke</span> <span class='kw'>=</span> <span class='fl'>0.2</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -204,8 +204,9 @@ are chosen automatically.</p></td>
 this function builds. If <code>NULL</code> then a simple empty plot is used.</p></td>
     </tr>
     <tr>
-      <th>poly_list</th>
-      <td><p>optional list of polygon coordinates that are added to plot.</p></td>
+      <th>poly_list, poly_col</th>
+      <td><p>optional list of polygon coordinates that are added
+to plot, and associated plotting parameters.</p></td>
     </tr>
     <tr>
       <th>labeled_points</th>
@@ -215,11 +216,6 @@ this function builds. If <code>NULL</code> then a simple empty plot is used.</p>
       <th>point_size, point_colour, point_fill, point_stroke</th>
       <td><p>properties of plotted
 sampling points.</p></td>
-    </tr>
-    <tr>
-      <th>plot_data_values</th>
-      <td><p>whether to plot aggregated data values instead of 
-z-score, if available</p></td>
     </tr>
     </table>
 

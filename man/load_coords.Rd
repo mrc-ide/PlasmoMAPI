@@ -15,6 +15,7 @@ load_coords(proj, long, lat, check_delete_output = TRUE)
 overwriting any existing data loaded into a project.}
 }
 \description{
-Given an existing PlasmoMAPI project, load the spatial coordinates of
-  points at which samples were obtained.
+Given an existing PlasmoMAPI project, load the spatial
+  coordinates of nodes at which samples were obtained. Node locations cannot
+  be directly on top of one another.
 }

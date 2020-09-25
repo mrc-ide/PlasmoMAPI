@@ -54,8 +54,9 @@ pm_project <- function() {
 #------------------------------------------------
 #' @title Load coordinates of sampling locations into PlasmoMAPI project
 #'
-#' @description Given an existing PlasmoMAPI project, load the spatial coordinates of
-#'   points at which samples were obtained.
+#' @description Given an existing PlasmoMAPI project, load the spatial
+#'   coordinates of nodes at which samples were obtained. Node locations cannot
+#'   be directly on top of one another.
 #'
 #' @param proj object of class \code{pm_project}.
 #' @param long,lat vectors of sampling longitudes and latitudes.
@@ -72,6 +73,11 @@ load_coords <- function(proj, long, lat, check_delete_output = TRUE) {
   assert_vector_numeric(lat)
   assert_same_length(long, lat)
   assert_single_logical(check_delete_output)
+  
+  # check that no duplicate coords
+  if (any(duplicated(paste0(long, lat)))) {
+    stop("Node coordinates must be unique. If multiple pairwise observations have been taken in the same spatial node then these must be aggregated by the user before passing into PlasmoMAPI")
+  }
   
   # check whether there is data loaded into project already
   if (!is.null(proj$data$coords)) {
