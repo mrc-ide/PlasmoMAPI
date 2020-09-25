@@ -256,6 +256,8 @@ assign_map <- function(proj, eccentricity = 0.9, assign_type = 1,
     proj$map$hex_edges <- output_raw$hex_edges
     proj$map$duplicate_labels <- data.frame(x=output_raw$loc_long,y=output_raw$loc_lat,label=output_raw$nDuplicates)
   }
+  proj$map$eccentricity = eccentricity
+  
   # return invisibly
   invisible(proj)
 }
@@ -370,7 +372,12 @@ calc_simple_hex_values <- function(proj, min_dist=0.0,max_dist=Inf){
 #------------------------------------------------
 #' @title Perform PlasmoMAPI analysis
 #'
-#' @description TODO.
+#' @description Runs the main PlasmoMAPI analysis. Statistical distances are
+#'   binned by edge lengths and normalised within each bin. Then raw scores are
+#'   calculated for eac hex and compared against their sampling distribution,
+#'   obtained via permutation testing, to arrive at z-scores. A range-limited
+#'   version of this analysis can be specified by setting the minimum and
+#'   maximum allowed distances.
 #'
 #' @param proj object of class \code{pm_project}.
 #' @param n_perms number of permutations in test.
@@ -429,7 +436,9 @@ pm_analysis <- function(proj,
   # ---------------------------------------------
   # Pre-process data
   
-  message("Pre-processing");
+  if (report_progress) {
+    message("Pre-processing");
+  }
   
   # convert spatial and statistical values to x and y for convenience
   x <- as.vector(proj$data$spatial_dist)
@@ -457,7 +466,7 @@ pm_analysis <- function(proj,
     if (length(ret) >= min_group_size) {
       return(ret)
     }
-  }, 1:n_breaks, SIMPLIFY = FALSE)
+  }, seq_len(n_breaks), SIMPLIFY = FALSE)
   
   # store number of values in each bin
   df_group_num <- data.frame(dist_min = cut_breaks[-(n_breaks+1)],
@@ -489,6 +498,15 @@ pm_analysis <- function(proj,
   
   # use mean and sd to normalise y values
   y_norm <- (y - y_perm_mean[perm_group]) / y_perm_sd[perm_group]
+  
+  # TODO - remove? Maybe fixes false positives problem
+  #tmp <- df_group_num$n_edges[perm_group]
+  #y_norm <- y_norm / sqrt((tmp - 1)/tmp)
+  
+  # apply same normalisation to values in the perm list
+  y_perm_norm <- mapply(function(i) {
+    (y_perm[[i]] - y_perm_mean[i]) / y_perm_sd[i]
+  }, seq_len(n_breaks), SIMPLIFY = FALSE)
   
   # indices of edges may have changed. Update hex_edges to account for this
   hex_edges <- mapply(function(z) {
@@ -523,7 +541,9 @@ pm_analysis <- function(proj,
   }
   
   # create argument list
-  args <- list(hex_edges = hex_edges,
+  args <- list(perm_group = perm_group,
+               perm_list = y_perm_norm,
+               hex_edges = hex_edges,
                n_perms = n_perms,
                y_norm = y_norm,
                report_progress = report_progress,
@@ -536,6 +556,7 @@ pm_analysis <- function(proj,
   output_raw <- pm_analysis_cpp(args, args_functions, args_progress)
   
   
+  
   # ---------------------------------------------
   # Process raw output
   
@@ -546,11 +567,25 @@ pm_analysis <- function(proj,
   # use null distribution to convert y_obs into a z-score
   z_score <- (y_obs - null_mean)/sqrt(null_var)
   
+  # TODO - delete. Calculating empirical p-values
+  if (TRUE) {
+    
+    #browser()
+    
+    z <- do.call(rbind, output_raw$ret_all)
+    
+    empirical_p <- colSums(sweep(z, 2, y_obs, "<"))
+    empirical_p <- (empirical_p + 1) / (nrow(z) + 2)
+    z_score2 <- qnorm(empirical_p)
+    
+  }
   
   # ---------------------------------------------
   # Save output as list
   
   proj$output <- list(hex_values = z_score,
+                      z_score = z_score,
+                      z_score2 = z_score2,
                       hex_coverage = hex_coverage,
                       spatial_group_num = df_group_num)
   
@@ -628,7 +663,7 @@ get_significant_hexes <- function(proj,
   # while fixing the false descovery rate
   df$BY <- FDR * seq_along(df$p) / nrow(df)
   which_lower <- which_upper <- integer()
-  if (any(df$p <= df$BY)) {
+  if (any(df$p <= df$BY, na.rm = TRUE)) {
     
     w <- which(df$p <= df$BY)
     which_upper <- df$hex[w][df$hex_values[w] > 0]

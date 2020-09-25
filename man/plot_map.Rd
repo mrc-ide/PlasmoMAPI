@@ -16,6 +16,7 @@ plot_map(
   zlim = NULL,
   base_plot = NULL,
   poly_list = list(),
+  poly_col = "white",
   labeled_points = NULL,
   point_size = 1,
   point_colour = "white",
@@ -56,7 +57,8 @@ are chosen automatically.}
 \item{base_plot}{optional base plot (object of class \code{ggplot}) on which
 this function builds. If \code{NULL} then a simple empty plot is used.}
 
-\item{poly_list}{optional list of polygon coordinates that are added to plot.}
+\item{poly_list, poly_col}{optional list of polygon coordinates that are added
+to plot, and associated plotting parameters.}
 
 \item{labeled_points}{optional data frame of labeled points to add to graph.}
 
@@ -64,7 +66,7 @@ this function builds. If \code{NULL} then a simple empty plot is used.}
 sampling points.}
 
 \item{plot_data_values}{whether to plot aggregated data values instead of 
-z-score, if available}
+z-score, if available.}
 }
 \description{
 Plot hex map of PlasmoMAPI output.
