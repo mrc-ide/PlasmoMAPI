@@ -17,6 +17,7 @@ print.pm_project <- function(x, ...) {
 #------------------------------------------------
 # Overload summary()
 #' @method summary pm_project
+#' @importFrom stats median
 #' @export
 summary.pm_project <- function(object, ...) {
   

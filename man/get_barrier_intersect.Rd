@@ -12,6 +12,7 @@ get_barrier_intersect(
   barrier_method = 1,
   max_barrier_range = Inf,
   eccentricity = 0.9,
+  noise_sd = 0,
   n_ell = 20
 )
 }
@@ -48,6 +49,9 @@ apply locally.}
 
 \item{eccentricity}{eccentricity of ellipses (only used under
 \code{barrier_method = 3}).}
+
+\item{noise_sd}{standard deviation of Gaussian noise added to all distances
+(after the application of barriers).}
 
 \item{n_ell}{number of points that make up an ellipse (only used under
 \code{barrier_method = 3}).}
