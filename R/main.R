@@ -362,7 +362,7 @@ pm_proj.check_data_loaded <- function(proj) {
 #' @param pb_markdown whether to run progress bars in markdown mode, in which
 #'   case they are updated once at the end to avoid large amounts of output.
 #'
-#' @importFrom stats sd
+#' @importFrom stats sd qnorm
 #' @export
 
 pm_analysis <- function(proj,
