@@ -105,7 +105,7 @@ plot_map(p, poly_list = tut_data$known_barriers)
 
 We can also produce an interactive version of the same map:
 
-```{r, fig.width = 6, fig.height = 4.5}
+```{r, fig.width = 6, fig.height = 4.5, eval=FALSE}
 # plot interactive map
 plot_leaflet(p)
 ```
