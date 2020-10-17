@@ -31,7 +31,6 @@ jobs:
         if: runner.os == 'macOS'
         continue-on-error: true
         run: |
-          brew cask uninstall gfortran
           brew install udunits
           brew install gdal
           Rscript -e "install.packages('rgdal', type = 'source', configure.args = '--with-proj-lib=/usr/local/lib/ --with-proj-include=/usr/local/include/ --with-proj_api=proj_api.h')"
