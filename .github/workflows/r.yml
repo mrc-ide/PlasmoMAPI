@@ -27,14 +27,11 @@ jobs:
         uses: r-lib/actions/setup-r@ffe45a39586f073cc2e9af79c4ba563b657dc6e3
         with:
           r-version: ${{ matrix.r-version }}
-      - name: foo1
-        run: brew update
-      - name: foo2
-        run: brew link --overwrite gcc
-      - name: foo3
-        run: brew install gdal
-      - name: Install udunits
-        run: brew install udunits
+      - name: install macOS system dependencies
+        if: runner.os == 'macOS'
+        continue-on-error: true
+        run: |
+          brew install pkg-config udunits proj geos gdal netcdf
       - name: Install dependencies
         run: |
           install.packages(c("remotes", "rcmdcheck"))
