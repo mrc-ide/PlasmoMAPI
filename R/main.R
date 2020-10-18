@@ -520,31 +520,18 @@ pm_analysis <- function(proj,
   # Process raw output
   
   # get mean and variance of null distribution
-  null_mean <- output_raw$ret_sum/n_perms
+  null_mean <- output_raw$ret_sum / n_perms
   null_var <- (output_raw$ret_sum_sq - output_raw$ret_sum^2/n_perms) / (n_perms - 1)
   
   # use null distribution to convert y_obs into a z-score
-  z_score <- (y_obs - null_mean)/sqrt(null_var)
+  z_score <- (y_obs - null_mean) / sqrt(null_var)
   
-  # TODO - delete. Calculating empirical p-values
-  if (TRUE) {
-    
-    #browser()
-    
-    z <- do.call(rbind, output_raw$ret_all)
-    
-    empirical_p <- colSums(sweep(z, 2, y_obs, "<"))
-    empirical_p <- (empirical_p + 1) / (nrow(z) + 2)
-    z_score2 <- qnorm(empirical_p)
-    
-  }
   
   # ---------------------------------------------
   # Save output as list
   
   proj$output <- list(hex_values = z_score,
                       z_score = z_score,
-                      z_score2 = z_score2,
                       hex_coverage = hex_coverage,
                       spatial_group_num = df_group_num)
   

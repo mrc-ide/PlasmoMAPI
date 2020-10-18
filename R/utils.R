@@ -283,10 +283,10 @@ get_barrier_intersect <- function(node_long,
       # get boolean intersection matrix
       intersect_mat <- as.matrix(sf::st_intersects(line_sfc, poly_sfc))
       
-      # convert to length of intersection if using method 2
+      # convert to (great circle) length of intersection if using method 2
       if (barrier_method == 2) {
         intersect_mat[intersect_mat == TRUE] <- mapply(function(x) {
-          sf::st_length(x)
+          get_spatial_distance(x[c(1,3)], x[c(2,4)])[1]
         }, sf::st_intersection(line_sfc, poly_sfc))
       }
     }
