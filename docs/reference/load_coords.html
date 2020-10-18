@@ -40,8 +40,9 @@
 
 
 <meta property="og:title" content="Load coordinates of sampling locations into PlasmoMAPI project — load_coords" />
-<meta property="og:description" content="Given an existing PlasmoMAPI project, load the spatial coordinates of
-  points at which samples were obtained." />
+<meta property="og:description" content="Given an existing PlasmoMAPI project, load the spatial
+  coordinates of nodes at which samples were obtained. Node locations cannot
+  be directly on top of one another." />
 
 
 
@@ -122,13 +123,14 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Load coordinates of sampling locations into PlasmoMAPI project</h1>
-    <small class="dont-index">Source: <a href='https://github.com/username/mrc-ide/blob/master/R/main.R'><code>R/main.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/PlasmoMAPI/blob/master/R/main.R'><code>R/main.R</code></a></small>
     <div class="hidden name"><code>load_coords.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Given an existing PlasmoMAPI project, load the spatial coordinates of
-  points at which samples were obtained.</p>
+    <p>Given an existing PlasmoMAPI project, load the spatial
+  coordinates of nodes at which samples were obtained. Node locations cannot
+  be directly on top of one another.</p>
     </div>
 
     <pre class="usage"><span class='fu'>load_coords</span>(<span class='no'>proj</span>, <span class='no'>long</span>, <span class='no'>lat</span>, <span class='kw'>check_delete_output</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>

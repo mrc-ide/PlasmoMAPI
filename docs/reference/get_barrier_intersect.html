@@ -125,7 +125,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Get distance between points taking into account barriers</h1>
-    <small class="dont-index">Source: <a href='https://github.com/username/mrc-ide/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/PlasmoMAPI/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
     <div class="hidden name"><code>get_barrier_intersect.Rd</code></div>
     </div>
 
@@ -145,6 +145,7 @@
   <span class='kw'>barrier_method</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>max_barrier_range</span> <span class='kw'>=</span> <span class='fl'>Inf</span>,
   <span class='kw'>eccentricity</span> <span class='kw'>=</span> <span class='fl'>0.9</span>,
+  <span class='kw'>noise_sd</span> <span class='kw'>=</span> <span class='fl'>0</span>,
   <span class='kw'>n_ell</span> <span class='kw'>=</span> <span class='fl'>20</span>
 )</pre>
 
@@ -174,11 +175,17 @@ provided then this value will be used for all barriers.</p></td>
     </tr>
     <tr>
       <th>barrier_method</th>
-      <td><p>the method by which penalties are applied:</p><ul>
-<li><p>compare line, apply fixed penalty if line intersects</p></li>
-<li><p>compare line, apply penalty per unit intersection</p></li>
-<li><p>compare ellipse, apply penalty per unit area intersection</p></li>
-</ul></td>
+      <td><p>the method by which penalties are applied:</p><ol>
+<li><p>compare pairwise lines to barriers. If the line intersects then add
+  a fixed <code>barrier_penalty</code> to the spatial distance.</p></li>
+<li><p>compare pairwise lines to barriers. Calculate the intersection of
+  the two, multiply this by the <code>barrier_penalty</code> and add to the
+  spatial distance. For example, a <code>barrier_penalty</code> of 1 would mean
+  there is double the "friction" when moving through a barrier.</p></li>
+<li><p>compare pairwise ellipses to barriers. Calculate the intersection
+  area of the two, multiply this by the <code>barrier_penalty</code> and add to
+  the spatial distance.</p></li>
+</ol></td>
     </tr>
     <tr>
       <th>max_barrier_range</th>
@@ -190,6 +197,11 @@ apply locally.</p></td>
       <th>eccentricity</th>
       <td><p>eccentricity of ellipses (only used under
 <code>barrier_method = 3</code>).</p></td>
+    </tr>
+    <tr>
+      <th>noise_sd</th>
+      <td><p>standard deviation of Gaussian noise added to all distances
+(after the application of barriers).</p></td>
     </tr>
     <tr>
       <th>n_ell</th>

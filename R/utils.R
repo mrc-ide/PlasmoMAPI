@@ -197,11 +197,13 @@ lonlat_to_bearing <- function(origin_lon, origin_lat, dest_lon, dest_lat) {
 #'   apply locally.
 #' @param eccentricity eccentricity of ellipses (only used under
 #'   \code{barrier_method = 3}).
+#' @param noise_sd standard deviation of Gaussian noise added to all distances
+#'   (after the application of barriers).
 #' @param n_ell number of points that make up an ellipse (only used under
 #'   \code{barrier_method = 3}).
 #'
 #' @import sf
-#' @importFrom stats dist
+#' @importFrom stats dist rnorm
 #' @export
 
 get_barrier_intersect <- function(node_long,
@@ -211,6 +213,7 @@ get_barrier_intersect <- function(node_long,
                                   barrier_method = 1,
                                   max_barrier_range = Inf,
                                   eccentricity = 0.9,
+                                  noise_sd = 0,
                                   n_ell = 20) {
   
   # check inputs
@@ -232,6 +235,7 @@ get_barrier_intersect <- function(node_long,
   assert_in(barrier_method, 1:3)
   assert_single_pos(max_barrier_range, zero_allowed = TRUE)
   assert_single_bounded(eccentricity, inclusive_left = FALSE)
+  assert_single_pos(noise_sd, zero_allowed = TRUE)
   assert_single_pos_int(n_ell, zero_allowed = FALSE)
   
   # force barrier_penalty to vector
@@ -279,10 +283,21 @@ get_barrier_intersect <- function(node_long,
       # get boolean intersection matrix
       intersect_mat <- as.matrix(sf::st_intersects(line_sfc, poly_sfc))
       
-      # convert to length of intersection if using method 2
+      # convert to (great circle) length of intersection if using method 2
       if (barrier_method == 2) {
         intersect_mat[intersect_mat == TRUE] <- mapply(function(x) {
-          sf::st_length(x)
+          
+          # sum great circle distances of all intersection lenfths
+          if ("LINESTRING" %in% class(x)) {
+            get_spatial_distance(as.matrix(x)[1,], as.matrix(x)[2,])[1]
+          } else if ("MULTILINESTRING" %in% class(x)) {
+            sum(mapply(function(y) {
+              get_spatial_distance(y[1,], y[2,])[1]
+            }, x))
+          } else {
+            warning("cannot calculate distance: sfc type not recognised")
+          }
+          
         }, sf::st_intersection(line_sfc, poly_sfc))
       }
     }
@@ -330,6 +345,7 @@ get_barrier_intersect <- function(node_long,
   
   # get pairwise distance plus penalty
   d <- get_spatial_distance(node_long, node_lat) + intersect_penalty
+  d <- d + rnorm(length(d), sd = noise_sd)
   
   # return matrix
   return(as.matrix(d))

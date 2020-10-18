@@ -1,5 +1,20 @@
 
 #------------------------------------------------
+test_that("does not allow duplicate node coordinates", {
+  
+  # define duplicate node distribution
+  node_df <- data.frame(long = c(1,1,1),
+                        lat = c(1,2,2))
+  
+  # create new PlasmoMAPI project
+  p <- pm_project()
+  
+  # expect error when load node coordinates
+  expect_error(load_coords(p, node_df$long, node_df$lat))
+  
+})
+
+#------------------------------------------------
 test_that("exits gracefuly when not enough values (or SD=0) in spatial distance groups", {
   
   set.seed(1)

@@ -54,8 +54,9 @@ pm_project <- function() {
 #------------------------------------------------
 #' @title Load coordinates of sampling locations into PlasmoMAPI project
 #'
-#' @description Given an existing PlasmoMAPI project, load the spatial coordinates of
-#'   points at which samples were obtained.
+#' @description Given an existing PlasmoMAPI project, load the spatial
+#'   coordinates of nodes at which samples were obtained. Node locations cannot
+#'   be directly on top of one another.
 #'
 #' @param proj object of class \code{pm_project}.
 #' @param long,lat vectors of sampling longitudes and latitudes.
@@ -72,6 +73,11 @@ load_coords <- function(proj, long, lat, check_delete_output = TRUE) {
   assert_vector_numeric(lat)
   assert_same_length(long, lat)
   assert_single_logical(check_delete_output)
+  
+  # check that no duplicate coords
+  if (any(duplicated(paste0(long, lat)))) {
+    stop("Node coordinates must be unique. If multiple pairwise observations have been taken in the same spatial node then these must be aggregated by the user before passing into PlasmoMAPI")
+  }
   
   # check whether there is data loaded into project already
   if (!is.null(proj$data$coords)) {
@@ -105,7 +111,7 @@ load_coords <- function(proj, long, lat, check_delete_output = TRUE) {
 #' @noRd
 pm_proj.check_coords_loaded <- function(proj) {
   assert_custom_class(proj, "pm_project")
-  assert_non_null(proj$data$coords)
+  assert_non_null(proj$data$coords, message = "project must have node coordinates loaded")
 }
 
 #------------------------------------------------
@@ -182,7 +188,7 @@ create_map <- function(proj, hex_width = NULL, border_coords = NULL) {
 #' @noRd
 pm_proj.check_map_loaded <- function(proj) {
   assert_custom_class(proj, "pm_project")
-  assert_non_null(proj$map)
+  assert_non_null(proj$map, message = "project must have a map loaded")
 }
 
 #------------------------------------------------
@@ -266,7 +272,7 @@ assign_map <- function(proj,
 pm_proj.check_map_assigned <- function(proj) {
   assert_custom_class(proj, "pm_project")
   pm_proj.check_map_loaded(proj)
-  assert_non_null(proj$map$hex_edges)
+  assert_non_null(proj$map$hex_edges, message = "project must have edges assigned to the hex grid")
 }
 
 #------------------------------------------------
@@ -320,7 +326,7 @@ load_data <- function(proj, pairwise_data, check_delete_output = TRUE) {
 pm_proj.check_data_loaded <- function(proj) {
   assert_custom_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
-  assert_non_null(proj$data$stat_dist)
+  assert_non_null(proj$data$stat_dist, message = "project must have pairwise data loaded")
 }
 
 #------------------------------------------------
@@ -356,7 +362,7 @@ pm_proj.check_data_loaded <- function(proj) {
 #' @param pb_markdown whether to run progress bars in markdown mode, in which
 #'   case they are updated once at the end to avoid large amounts of output.
 #'
-#' @importFrom stats sd
+#' @importFrom stats sd qnorm
 #' @export
 
 pm_analysis <- function(proj,
@@ -514,31 +520,18 @@ pm_analysis <- function(proj,
   # Process raw output
   
   # get mean and variance of null distribution
-  null_mean <- output_raw$ret_sum/n_perms
+  null_mean <- output_raw$ret_sum / n_perms
   null_var <- (output_raw$ret_sum_sq - output_raw$ret_sum^2/n_perms) / (n_perms - 1)
   
   # use null distribution to convert y_obs into a z-score
-  z_score <- (y_obs - null_mean)/sqrt(null_var)
+  z_score <- (y_obs - null_mean) / sqrt(null_var)
   
-  # TODO - delete. Calculating empirical p-values
-  if (TRUE) {
-    
-    #browser()
-    
-    z <- do.call(rbind, output_raw$ret_all)
-    
-    empirical_p <- colSums(sweep(z, 2, y_obs, "<"))
-    empirical_p <- (empirical_p + 1) / (nrow(z) + 2)
-    z_score2 <- qnorm(empirical_p)
-    
-  }
   
   # ---------------------------------------------
   # Save output as list
   
   proj$output <- list(hex_values = z_score,
                       z_score = z_score,
-                      z_score2 = z_score2,
                       hex_coverage = hex_coverage,
                       spatial_group_num = df_group_num)
   

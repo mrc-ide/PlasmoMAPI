@@ -64,22 +64,19 @@ plot_map(p, poly_list = barrier_list)
 The argument `max_barrier_range` in `get_barrier_intersect()` allows us to
 define a spatial distance beyond which the barrier penalty does not apply, for
 example if `max_barrier_range = 100` and two sampling locations are either side
-of the barrier and separated by 110km then the barrier effectively does not
+of the barrier and separated by 101km then the barrier effectively does not
 exist between these locations. We will use this mtehod to simulate pairwise
 genetic distances between sampling locations, this time on the [-Inf,Inf]
 interval rather than the [0,1] interval just for a change.
 
 ```{r, fig.width = 6, fig.height = 4.5}
 # calculate distances, taking into account barriers
-sim_dist <- get_barrier_intersect(node_df$long, node_df$lat,
-                                  barrier_list = barrier_list,
-                                  barrier_penalty = -50,
-                                  barrier_method = 2,
-                                  max_barrier_range = 500)
-
-# add some noise to the data
-sim_dist_noise <- sim_dist + rnorm(length(sim_dist), sd = 2e2)
-genetic_distance <- as.matrix(as.dist(sim_dist_noise))
+genetic_distance <- get_barrier_intersect(node_df$long, node_df$lat,
+                                          barrier_list = barrier_list,
+                                          barrier_penalty = 0.1,
+                                          barrier_method = 2,
+                                          max_barrier_range = 500,
+                                          noise_sd = 2e2)
 ```
 
 Create a project, load the data, and look at a simple plot of spatial vs.
