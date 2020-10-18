@@ -9,3 +9,4 @@
 ^pkgdown$
 ^index.md$
 ^src-i386$
+^\.github$

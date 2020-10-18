@@ -125,7 +125,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Get distance between points taking into account barriers</h1>
-    <small class="dont-index">Source: <a href='https://github.com/username/mrc-ide/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/mrc-ide/PlasmoMAPI/blob/master/R/utils.R'><code>R/utils.R</code></a></small>
     <div class="hidden name"><code>get_barrier_intersect.Rd</code></div>
     </div>
 
@@ -145,6 +145,7 @@
   <span class='kw'>barrier_method</span> <span class='kw'>=</span> <span class='fl'>1</span>,
   <span class='kw'>max_barrier_range</span> <span class='kw'>=</span> <span class='fl'>Inf</span>,
   <span class='kw'>eccentricity</span> <span class='kw'>=</span> <span class='fl'>0.9</span>,
+  <span class='kw'>noise_sd</span> <span class='kw'>=</span> <span class='fl'>0</span>,
   <span class='kw'>n_ell</span> <span class='kw'>=</span> <span class='fl'>20</span>
 )</pre>
 
@@ -196,6 +197,11 @@ apply locally.</p></td>
       <th>eccentricity</th>
       <td><p>eccentricity of ellipses (only used under
 <code>barrier_method = 3</code>).</p></td>
+    </tr>
+    <tr>
+      <th>noise_sd</th>
+      <td><p>standard deviation of Gaussian noise added to all distances
+(after the application of barriers).</p></td>
     </tr>
     <tr>
       <th>n_ell</th>
