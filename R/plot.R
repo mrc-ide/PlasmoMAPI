@@ -39,6 +39,7 @@ plot_dist <- function(proj, col = "#00000050", overlay_model = TRUE) {
   
   # check inputs
   assert_custom_class(proj, "pm_project")
+  pm_proj.check_data_loaded(proj)
   assert_length(col, 1)
   assert_single_logical(overlay_model)
   

@@ -286,7 +286,18 @@ get_barrier_intersect <- function(node_long,
       # convert to (great circle) length of intersection if using method 2
       if (barrier_method == 2) {
         intersect_mat[intersect_mat == TRUE] <- mapply(function(x) {
-          get_spatial_distance(x[c(1,3)], x[c(2,4)])[1]
+          
+          # sum great circle distances of all intersection lenfths
+          if ("LINESTRING" %in% class(x)) {
+            get_spatial_distance(as.matrix(x)[1,], as.matrix(x)[2,])[1]
+          } else if ("MULTILINESTRING" %in% class(x)) {
+            sum(mapply(function(y) {
+              get_spatial_distance(y[1,], y[2,])[1]
+            }, x))
+          } else {
+            warning("cannot calculate distance: sfc type not recognised")
+          }
+          
         }, sf::st_intersection(line_sfc, poly_sfc))
       }
     }

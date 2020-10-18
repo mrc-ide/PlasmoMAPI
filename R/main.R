@@ -111,7 +111,7 @@ load_coords <- function(proj, long, lat, check_delete_output = TRUE) {
 #' @noRd
 pm_proj.check_coords_loaded <- function(proj) {
   assert_custom_class(proj, "pm_project")
-  assert_non_null(proj$data$coords)
+  assert_non_null(proj$data$coords, message = "project must have node coordinates loaded")
 }
 
 #------------------------------------------------
@@ -188,7 +188,7 @@ create_map <- function(proj, hex_width = NULL, border_coords = NULL) {
 #' @noRd
 pm_proj.check_map_loaded <- function(proj) {
   assert_custom_class(proj, "pm_project")
-  assert_non_null(proj$map)
+  assert_non_null(proj$map, message = "project must have a map loaded")
 }
 
 #------------------------------------------------
@@ -272,7 +272,7 @@ assign_map <- function(proj,
 pm_proj.check_map_assigned <- function(proj) {
   assert_custom_class(proj, "pm_project")
   pm_proj.check_map_loaded(proj)
-  assert_non_null(proj$map$hex_edges)
+  assert_non_null(proj$map$hex_edges, message = "project must have edges assigned to the hex grid")
 }
 
 #------------------------------------------------
@@ -326,7 +326,7 @@ load_data <- function(proj, pairwise_data, check_delete_output = TRUE) {
 pm_proj.check_data_loaded <- function(proj) {
   assert_custom_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
-  assert_non_null(proj$data$stat_dist)
+  assert_non_null(proj$data$stat_dist, message = "project must have pairwise data loaded")
 }
 
 #------------------------------------------------
