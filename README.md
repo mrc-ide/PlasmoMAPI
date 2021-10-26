@@ -1,9 +1,7 @@
 # PlasmoMAPI
 ### Version 0.1.0
-[![Travis build status](https://travis-ci.org/mrc-ide/PlasmoMAPI.svg?branch=master)](https://travis-ci.org/mrc-ide/PlasmoMAPI)
-[![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/mrc-ide/PlasmoMAPI?branch=master&svg=true)](https://ci.appveyor.com/project/mrc-ide/PlasmoMAPI)
-
-[![R build status](https://github.com/mrc-ide/PlasmoMAPI/workflows/R-CMD-check/badge.svg)](https://github.com/mrc-ide/PlasmoMAPI/actions)
+[![R build status](https://github.com/mrc-ide/PlasmoMAPI/workflows/master_build/badge.svg)](https://github.com/mrc-ide/PlasmoMAPI/actions)
+[![R build status](https://github.com/mrc-ide/PlasmoMAPI/workflows/develop_build/badge.svg)](https://github.com/mrc-ide/PlasmoMAPI/actions)
 
 --------------------------------------------------------------------------------------------------------------------------------
 
