@@ -68,7 +68,7 @@ pm_project <- function() {
 load_coords <- function(proj, long, lat, check_delete_output = TRUE) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   assert_vector_numeric(long)
   assert_vector_numeric(lat)
   assert_same_length(long, lat)
@@ -110,7 +110,7 @@ load_coords <- function(proj, long, lat, check_delete_output = TRUE) {
 # check that project has coordinates loaded
 #' @noRd
 pm_proj.check_coords_loaded <- function(proj) {
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   assert_non_null(proj$data$coords, message = "project must have node coordinates loaded")
 }
 
@@ -133,7 +133,7 @@ pm_proj.check_coords_loaded <- function(proj) {
 create_map <- function(proj, hex_width = NULL, border_coords = NULL) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   if (!is.null(hex_width)) {
     assert_single_pos(hex_width, zero_allowed = FALSE)
@@ -187,7 +187,7 @@ create_map <- function(proj, hex_width = NULL, border_coords = NULL) {
 # check that project has map loaded
 #' @noRd
 pm_proj.check_map_loaded <- function(proj) {
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   assert_non_null(proj$map, message = "project must have a map loaded")
 }
 
@@ -219,7 +219,7 @@ assign_map <- function(proj,
                        pb_markdown = FALSE) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   pm_proj.check_map_loaded(proj)
   assert_single_bounded(eccentricity, inclusive_left = FALSE, inclusive_right = TRUE)
@@ -270,7 +270,7 @@ assign_map <- function(proj,
 # check that project has map loaded and assigned
 #' @noRd
 pm_proj.check_map_assigned <- function(proj) {
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   pm_proj.check_map_loaded(proj)
   assert_non_null(proj$map$hex_edges, message = "project must have edges assigned to the hex grid")
 }
@@ -291,7 +291,7 @@ pm_proj.check_map_assigned <- function(proj) {
 load_data <- function(proj, pairwise_data, check_delete_output = TRUE) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   assert_matrix_numeric(pairwise_data)
   assert_symmetric_matrix(pairwise_data)
@@ -324,7 +324,7 @@ load_data <- function(proj, pairwise_data, check_delete_output = TRUE) {
 # check that project has pairwise data loaded
 #' @noRd
 pm_proj.check_data_loaded <- function(proj) {
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   assert_non_null(proj$data$stat_dist, message = "project must have pairwise data loaded")
 }
@@ -374,7 +374,7 @@ pm_analysis <- function(proj,
                         pb_markdown = FALSE) {
   
   # check project
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   pm_proj.check_map_assigned(proj)
   pm_proj.check_data_loaded(proj)
@@ -543,7 +543,7 @@ pm_analysis <- function(proj,
 # check that project has output
 #' @noRd
 pm_proj.check_output_exists <- function(proj) {
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   assert_non_null(proj$output)
 }
 
@@ -574,7 +574,7 @@ get_significant_hexes <- function(proj,
   hex_coverage <- NULL
   
   # check project
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   pm_proj.check_output_exists(proj)
   
   assert_single_string(empirical_tail)

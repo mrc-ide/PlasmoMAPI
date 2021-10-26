@@ -38,7 +38,7 @@ daily_cols <- function() {
 plot_dist <- function(proj, col = "#00000050", overlay_model = TRUE) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   pm_proj.check_data_loaded(proj)
   assert_length(col, 1)
   assert_single_logical(overlay_model)
@@ -87,7 +87,7 @@ plot_dist <- function(proj, col = "#00000050", overlay_model = TRUE) {
 plot_coverage <- function(proj, breaks = c(0, 10, 20, 30, 40, 50, 100, Inf)) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   pm_proj.check_coords_loaded(proj)
   pm_proj.check_map_assigned(proj)
   pm_proj.check_output_exists(proj)
@@ -178,7 +178,7 @@ plot_map <- function(proj,
                      point_stroke = 0.2) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   assert_single_logical(plot_sampling_points)
   assert_single_logical(plot_hex_grid)
   assert_single_pos_int(min_hex_coverage, zero_allowed = TRUE)
@@ -191,7 +191,7 @@ plot_map <- function(proj,
     assert_length(zlim, 2)
   }
   if (!is.null(base_plot)) {
-    assert_custom_class(base_plot, "ggplot")
+    assert_class(base_plot, "ggplot")
   }
   assert_list(poly_list)
   nb <- length(poly_list)
@@ -338,7 +338,7 @@ plot_network <- function(proj,
                          base_plot = NULL) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   assert_non_null(proj$data$coords, message = "project must have coordinates loaded")
   if (!is.null(zlim)) {
     assert_vector_numeric(zlim)
@@ -347,7 +347,7 @@ plot_network <- function(proj,
   assert_single_pos(node_size)
   assert_single_pos(edge_size)
   if (!is.null(base_plot)) {
-    assert_custom_class(base_plot, "ggplot")
+    assert_class(base_plot, "ggplot")
   }
   
   # produce basic plot
@@ -430,7 +430,7 @@ plot_ellipses <- function(proj,
                           base_plot = NULL) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   assert_non_null(proj$data$coords, message = "project must have coordinates loaded")
   assert_single_bounded(eccentricity)
   assert_single_pos_int(n)
@@ -442,7 +442,7 @@ plot_ellipses <- function(proj,
   }
   assert_single_pos(node_size)
   if (!is.null(base_plot)) {
-    assert_custom_class(base_plot, "ggplot")
+    assert_class(base_plot, "ggplot")
   }
   
   # produce basic plot
@@ -527,7 +527,7 @@ plot_leaflet <- function(proj,
                          col_scale = viridisLite::magma(100)) {
   
   # check inputs
-  assert_custom_class(proj, "pm_project")
+  assert_class(proj, "pm_project")
   assert_single_bounded(fill_opacity)
   assert_single_bounded(legend_opacity)
   assert_single_pos_int(map_type)
@@ -586,7 +586,7 @@ plot_leaflet <- function(proj,
 overlay_points <- function(myplot, lon, lat, col = "black", size = 2, opacity = 1.0) {
   
   # check inputs
-  assert_custom_class(myplot, "leaflet")
+  assert_class(myplot, "leaflet")
   assert_vector_numeric(lon)
   assert_vector_numeric(lat)
   assert_same_length(lon, lat)
@@ -626,7 +626,7 @@ plot_daily_states <- function(x,
   state <- count <- NULL
   
   # check inputs
-  assert_custom_class(x, "pm_sim")
+  assert_class(x, "pm_sim")
   assert_single_pos_int(deme, zero_allowed = FALSE)
   assert_leq(deme, length(x$daily_values), message = "deme not found within simulation output")
   assert_vector(states)

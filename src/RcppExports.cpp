@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // assign_map_cpp
 Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress);
 RcppExport SEXP _PlasmoMAPI_assign_map_cpp(SEXP argsSEXP, SEXP args_functionsSEXP, SEXP args_progressSEXP) {
@@ -31,24 +36,10 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sim_falciparum_cpp
-Rcpp::List sim_falciparum_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress);
-RcppExport SEXP _PlasmoMAPI_sim_falciparum_cpp(SEXP argsSEXP, SEXP args_functionsSEXP, SEXP args_progressSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::List >::type args(argsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type args_functions(args_functionsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type args_progress(args_progressSEXP);
-    rcpp_result_gen = Rcpp::wrap(sim_falciparum_cpp(args, args_functions, args_progress));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_PlasmoMAPI_assign_map_cpp", (DL_FUNC) &_PlasmoMAPI_assign_map_cpp, 3},
     {"_PlasmoMAPI_pm_analysis_cpp", (DL_FUNC) &_PlasmoMAPI_pm_analysis_cpp, 3},
-    {"_PlasmoMAPI_sim_falciparum_cpp", (DL_FUNC) &_PlasmoMAPI_sim_falciparum_cpp, 3},
     {NULL, NULL, 0}
 };
 

@@ -9,7 +9,3 @@ pm_analysis_cpp <- function(args, args_functions, args_progress) {
     .Call(`_PlasmoMAPI_pm_analysis_cpp`, args, args_functions, args_progress)
 }
 
-sim_falciparum_cpp <- function(args, args_functions, args_progress) {
-    .Call(`_PlasmoMAPI_sim_falciparum_cpp`, args, args_functions, args_progress)
-}
-

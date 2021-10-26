@@ -18,7 +18,3 @@ Rcpp::List assign_map_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List
 // [[Rcpp::export]]
 Rcpp::List pm_analysis_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress);
 
-//------------------------------------------------
-// simulate from simple individual-based model
-// [[Rcpp::export]]
-Rcpp::List sim_falciparum_cpp(Rcpp::List args, Rcpp::List args_functions, Rcpp::List args_progress);

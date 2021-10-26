@@ -15,7 +15,7 @@ test_that("does not allow duplicate node coordinates", {
 })
 
 #------------------------------------------------
-test_that("exits gracefuly when not enough values (or SD=0) in spatial distance groups", {
+test_that("exits gracefuly when not enough values (or SD = 0) in spatial distance groups", {
   
   set.seed(1)
   
